@@ -1,0 +1,149 @@
+@font-face {
+  font-family: 'PPNeueMontreal';
+  src: url('../fonts/PPNeueMontreal-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #1d1d1d;
+  font-family: 'PPNeueMontreal', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.screen {
+  position: relative;
+  width: 320px;
+  height: 694px;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 50% 52%,
+    #b7d8f2 0%,
+    #a9d0ee 30%,
+    #98c6e8 65%,
+    #89bae0 100%
+  );
+}
+
+.title {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 28px;
+  line-height: 1;
+  color: #3f6486;
+  text-shadow: 0 5px 8px rgba(42, 71, 97, 0.28);
+}
+
+.arrow-wrap {
+  position: absolute;
+  top: 145px;
+  left: 50%;
+  width: 132px;
+  height: 62px;
+  transform: translateX(-50%);
+}
+
+.rotate-arrow {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.rotate-arrow path {
+  fill: none;
+  stroke: #4b6f93;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rotate-arrow .arrow-head {
+  fill: #4b6f93;
+  stroke: #4b6f93;
+  stroke-width: 4;
+}
+
+.globe-stage {
+  position: absolute;
+  top: 235px;
+  left: 50%;
+  width: 230px;
+  height: 230px;
+  transform: translateX(-50%);
+}
+
+.globe-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.globe-canvas:active {
+  cursor: grabbing;
+}
+
+.bottom-nav {
+  position: absolute;
+  left: 8px;
+  bottom: 18px;
+  width: 304px;
+  height: 56px;
+  border-radius: 22px;
+  background: #c9e2f3;
+  box-shadow:
+    0 3px 10px rgba(71, 110, 141, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 14px;
+}
+
+.nav-btn {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+.nav-btn img {
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 4px 3px rgba(42, 71, 97, 0.22));
+}
+
+.back img {
+  width: 38px;
+  height: auto;
+}
+
+.bell img {
+  width: 27px;
+  height: auto;
+}
+
+.home img {
+  width: 31px;
+  height: auto;
+}
+
+.chat img {
+  width: 39px;
+  height: auto;
+}

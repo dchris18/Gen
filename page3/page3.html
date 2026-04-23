@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page 3</title>
+    <link rel="stylesheet" href="./page3.css" />
+  </head>
+  <body>
+    <main class="screen">
+      <h1 class="title">Select your region</h1>
+
+      <div class="arrow-wrap" aria-hidden="true">
+        <svg class="rotate-arrow" viewBox="0 0 220 100">
+          <path
+            d="M 40 50
+               C 40 20, 180 20, 180 55
+               C 180 78, 135 82, 108 72"
+          />
+          <path
+            class="arrow-head"
+            d="M 104 70 L 119 65 L 114 80"
+          />
+        </svg>
+      </div>
+
+      <div class="globe-stage">
+        <canvas class="globe-canvas"></canvas>
+      </div>
+
+      <nav class="bottom-nav" aria-label="Bottom navigation">
+        <a class="nav-btn back" href="../index.html" aria-label="Back">
+          <img src="../photos/Back.png" alt="Back" />
+        </a>
+        <a class="nav-btn bell" href="#" aria-label="Notifications">
+          <img src="../photos/Bell.png" alt="Bell" />
+        </a>
+        <a class="nav-btn home" href="../index.html" aria-label="Home">
+          <img src="../photos/Home.png" alt="Home" />
+        </a>
+        <a class="nav-btn chat" href="#" aria-label="Chat">
+          <img src="../photos/Chat.png" alt="Chat" />
+        </a>
+      </nav>
+    </main>
+
+    <script type="module" src="./page3.js"></script>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+@font-face {
+  font-family: 'PPNeueMontreal';
+  src: url('../fonts/PPNeueMontreal-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #1d1d1d;
+  font-family: 'PPNeueMontreal', sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.screen {
+  position: relative;
+  width: 320px;
+  height: 694px;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 50% 58%,
+    #eff0b4 0%,
+    #ece9bc 28%,
+    #e8e5c3 52%,
+    #f5f4e8 100%
+  );
+}
+
+.top-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  width: 100%;
+  padding: 0;
+}
+
+.tool-card {
+  height: 72px;
+  border: 2px solid #8f5f61;
+  border-top: 2px solid #7f5558;
+  border-left: 2px solid #7f5558;
+  border-radius: 0 0 12px 12px;
+  background: #8a5b5d;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.08),
+    0 3px 6px rgba(89, 58, 59, 0.18);
+}
+
+.tool-card img {
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.tool-card:first-child img {
+  width: 58px;
+  height: auto;
+  transform: translateY(2px);
+}
+
+.tool-card:last-child img {
+  width: 82px;
+  height: auto;
+  transform: translateY(1px);
+}
+
+.garden-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 28px 10px 0;
+}
+
+.plot {
+  width: 92px;
+  height: 86px;
+  border: none;
+  border-radius: 13px;
+  background: #d9d8b8;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.35),
+    0 2px 5px rgba(100, 99, 71, 0.18);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.plot img {
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.plot:nth-child(1) img {
+  width: 47px;
+  height: auto;
+}
+
+.plot:nth-child(2) img {
+  width: 42px;
+  height: auto;
+}
+
+.plot:nth-child(3) img {
+  width: 48px;
+  height: auto;
+}
+
+.plot.faded img {
+  opacity: 0.55;
+}
+
+.bottom-nav {
+  position: absolute;
+  left: 8px;
+  bottom: 18px;
+  width: 304px;
+  height: 56px;
+  border-radius: 22px;
+  background: #e3bdab;
+  box-shadow:
+    0 3px 10px rgba(103, 68, 54, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 14px;
+}
+
+.nav-btn {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+.nav-btn img {
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.back img {
+  width: 38px;
+  height: auto;
+}
+
+.bell img {
+  width: 27px;
+  height: auto;
+}
+
+.home img {
+  width: 31px;
+  height: auto;
+}
+
+.chat img {
+  width: 39px;
+  height: auto;
+}
