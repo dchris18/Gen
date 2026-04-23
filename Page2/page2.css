@@ -26,8 +26,8 @@ button {
 
 .screen {
   position: relative;
-  width: 646px;
-  height: 1398px;
+  width: 320px;
+  height: 694px;
   overflow: hidden;
   background: #7f8d7b;
 }
@@ -35,13 +35,13 @@ button {
 /* top title */
 .title-pill {
   position: absolute;
-  top: 45px;
-  left: 32px;
-  width: 566px;
-  height: 112px;
-  border-radius: 34px;
+  top: 24px;
+  left: 16px;
+  width: 288px;
+  height: 54px;
+  border-radius: 18px;
   background: #f0dfb8;
-  box-shadow: 0 0 26px rgba(255, 242, 196, 0.55);
+  box-shadow: 0 0 14px rgba(255, 242, 196, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,33 +49,33 @@ button {
 
 .title {
   margin: 0;
-  font-size: 68px;
+  font-size: 28px;
   line-height: 1;
-  letter-spacing: -2px;
+  letter-spacing: -0.8px;
   color: #7a4144;
 }
 
 /* planner board */
 .planner-board {
   position: absolute;
-  top: 185px;
-  left: 20px;
-  width: 602px;
-  height: 995px;
-  border-radius: 26px;
+  top: 92px;
+  left: 10px;
+  width: 300px;
+  height: 492px;
+  border-radius: 20px;
   background: #9a8164;
-  border: 12px solid #de9572;
+  border: 8px solid #de9572;
   box-shadow:
     0 7px 14px rgba(0, 0, 0, 0.18),
-    inset 0 0 0 6px rgba(232, 178, 146, 0.4);
+    inset 0 0 0 4px rgba(232, 178, 146, 0.35);
 }
 
 .eye-button {
   position: absolute;
-  right: 20px;
-  bottom: 18px;
-  width: 150px;
-  height: 90px;
+  right: 10px;
+  bottom: 8px;
+  width: 72px;
+  height: 44px;
   border: none;
   background: transparent;
   padding: 0;
@@ -86,19 +86,19 @@ button {
   width: 100%;
   height: 100%;
   display: block;
-  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.12));
 }
 
 /* bottom tools */
 .tool-row {
   position: absolute;
   left: 0;
-  bottom: 48px;
+  bottom: 22px;
   width: 100%;
   display: flex;
   justify-content: space-evenly;
   align-items: end;
-  padding: 0 30px;
+  padding: 0 14px;
 }
 
 .tool-btn {
@@ -113,20 +113,20 @@ button {
   max-width: none;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.16));
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.16));
 }
 
 .tool-trowel img {
-  width: 170px;
+  width: 86px;
   height: auto;
 }
 
 .tool-pot img {
-  width: 150px;
+  width: 76px;
   height: auto;
 }
 
 .tool-shears img {
-  width: 170px;
+  width: 88px;
   height: auto;
 }
