@@ -145,26 +145,37 @@ body {
   height: auto;
 }
 
-/* plants */
-.plant1 {
-  left: 8px;
-  top: 430px;
-  width: 86px;
+.plant-cluster {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 150px;
+  pointer-events: none;
+}
+
+.plant {
+  position: absolute;
   height: auto;
 }
 
-.plant2 {
-  left: 111px;
-  top: 402px;
-  width: 88px;
-  height: auto;
+.onion {
+  width: 115px;
+  left: 75px;
+  top: 100;
 }
 
-.plant3 {
-  left: 214px;
-  top: 404px;
-  width: 86px;
-  height: auto;
+.potato {
+  width: 115px;
+  left: 169px;
+  top: 28px;
+}
+
+.carrot {
+  width: 115px;
+  left: -20px;
+  top: 30px;
 }
 
 /* bottom bar */
@@ -193,11 +204,11 @@ body {
 }
 
 .home {
-  left: 146px;
+  left: 148px;
   width: 31px;
 }
 
 .chat {
-  left: 199px;
+  left: 210px;
   width: 39px;
 }
