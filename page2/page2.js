@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const height = container.clientHeight || 560;
 
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-  camera.position.set(0, 0, 0);
+  camera.position.set(5, 5, 7.8);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({
@@ -55,8 +55,16 @@ document.addEventListener("DOMContentLoaded", () => {
   let platform;
   let currentSize = 6;
 
+  let savedRotation = {
+    x: 0.55,
+    y: -0.75
+  };
+
   function createPlatform(size) {
     if (platform) {
+      savedRotation.x = platform.rotation.x;
+      savedRotation.y = platform.rotation.y;
+
       scene.remove(platform);
 
       platform.traverse((child) => {
@@ -103,23 +111,26 @@ document.addEventListener("DOMContentLoaded", () => {
     grid.position.y = 0.181;
     platformGroup.add(grid);
 
-    platformGroup.rotation.x = 0.55;
-    platformGroup.rotation.y = -0.75;
-    platformGroup.position.y = -0.2;
+    platformGroup.rotation.x = savedRotation.x;
+    platformGroup.rotation.y = savedRotation.y;
+    platformGroup.rotation.z = 0;
+    platformGroup.position.set(0, -0.2, 0);
 
     if (size === 3) {
       platformGroup.scale.set(1.15, 1, 1.15);
+      camera.position.set(5, 5, 7);
     } else if (size === 6) {
       platformGroup.scale.set(0.95, 1, 0.95);
+      camera.position.set(5, 5, 7.8);
     } else if (size === 9) {
       platformGroup.scale.set(0.75, 1, 0.75);
+      camera.position.set(5, 5, 9.5);
     }
+
+    camera.lookAt(0, 0, 0);
 
     platform = platformGroup;
     scene.add(platform);
-
-    camera.position.set(5, 5, 7);
-    camera.lookAt(0, 0, 0);
   }
 
   createPlatform(6);
@@ -167,8 +178,15 @@ document.addEventListener("DOMContentLoaded", () => {
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
 
-    camera.position.z += e.deltaY * 0.030;
-    camera.position.z = Math.max(3, Math.min(15, camera.position.z));
+    camera.position.z += e.deltaY * 0.045;
+
+    if (currentSize === 3) {
+      camera.position.z = Math.max(3, Math.min(10, camera.position.z));
+    } else if (currentSize === 6) {
+      camera.position.z = Math.max(4, Math.min(12, camera.position.z));
+    } else if (currentSize === 9) {
+      camera.position.z = Math.max(5, Math.min(14, camera.position.z));
+    }
 
     camera.lookAt(0, 0, 0);
   });
