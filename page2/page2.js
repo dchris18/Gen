@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const height = container.clientHeight || 560;
 
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-  camera.position.set(5, 5, 7);
+  camera.position.set(0, 0, 0);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({
@@ -167,8 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
 
-    camera.position.z += e.deltaY * 0.003;
-    camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
+    camera.position.z += e.deltaY * 0.009;
+    camera.position.z = Math.max(4.5, Math.min(10, camera.position.z));
 
     camera.lookAt(0, 0, 0);
   });
