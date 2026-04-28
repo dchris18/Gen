@@ -138,6 +138,12 @@ body {
   height: auto;
 }
 
+.globe-link {
+  position: absolute;
+  display: block;
+  z-index: 5;
+}
+
 .weather {
   left: 20px;
   top: 360px;
