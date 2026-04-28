@@ -22,7 +22,6 @@ button {
   font: inherit;
 }
 
-/* phone screen */
 .screen {
   position: relative;
   width: 320px;
@@ -31,7 +30,6 @@ button {
   background: #7f8d7b;
 }
 
-/* planner board */
 .planner-board {
   position: absolute;
   top: 24px;
@@ -61,10 +59,9 @@ button {
   display: block;
 }
 
-/* eye button */
 .eye-button {
   position: absolute;
-  right: 10px;
+  left: 10px;
   bottom: 8px;
   width: 72px;
   height: 44px;
@@ -82,18 +79,15 @@ button {
   filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.12));
 }
 
-/* grid popup menu */
 .grid-menu {
   position: absolute;
-  right: 10px;
-  bottom: 58px;
-  width: 130px;
-  padding: 10px;
+  left: 88px;
+  bottom: 12px;
+  padding: 8px;
   border-radius: 14px;
   background: #f0dfb8;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
   display: none;
-  flex-direction: column;
   gap: 6px;
   z-index: 10;
 }
@@ -102,42 +96,16 @@ button {
   display: flex;
 }
 
-.grid-menu p {
-  margin: 0 0 2px;
-  font-size: 14px;
-  color: #7a4144;
-  text-align: center;
-}
-
 .grid-menu button {
   border: none;
   border-radius: 9px;
   background: #de9572;
   color: #7a4144;
-  padding: 5px;
+  padding: 7px 9px;
   cursor: pointer;
+  font-size: 16px;
 }
 
-.custom-row {
-  display: flex;
-  gap: 5px;
-}
-
-.custom-row input {
-  width: 58px;
-  border: none;
-  border-radius: 8px;
-  padding: 5px;
-  font-family: inherit;
-  color: #7a4144;
-}
-
-.custom-row button {
-  flex: 1;
-  font-size: 12px;
-}
-
-/* bottom tools */
 .tool-row {
   position: absolute;
   left: 0;
@@ -171,12 +139,15 @@ button {
 
 .tool-trowel img {
   width: 86px;
+  height: auto;
 }
 
 .tool-pot img {
   width: 76px;
+  height: auto;
 }
 
 .tool-shears img {
   width: 88px;
+  height: auto;
 }
