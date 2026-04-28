@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!canvas || !stage) return;
 
   const scene = new THREE.Scene();
-
   let zoom = 6.2;
 
   const camera = new THREE.PerspectiveCamera(
@@ -34,28 +33,33 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   renderer.setSize(stage.clientWidth, stage.clientHeight, false);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.3);
   scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.9);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
   directionalLight.position.set(4, 3, 6);
   scene.add(directionalLight);
 
-  const rimLight = new THREE.DirectionalLight(0x9fd7ff, 0.8);
+  const rimLight = new THREE.DirectionalLight(0x9fd7ff, 0.9);
   rimLight.position.set(-4, -2, -4);
   scene.add(rimLight);
 
   const textureLoader = new THREE.TextureLoader();
   const earthTexture = textureLoader.load("../photos/Earth.png");
-  earthTexture.colorSpace = THREE.SRGBColorSpace;
 
-  const earthGeometry = new THREE.SphereGeometry(2.05, 48, 48);
+  earthTexture.colorSpace = THREE.SRGBColorSpace;
+  earthTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  earthTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  earthTexture.magFilter = THREE.LinearFilter;
+  earthTexture.generateMipmaps = true;
+
+  const earthGeometry = new THREE.SphereGeometry(2.05, 96, 96);
 
   const earthMaterial = new THREE.MeshStandardMaterial({
     map: earthTexture,
-    roughness: 1,
+    roughness: 0.95,
     metalness: 0
   });
 
@@ -64,18 +68,19 @@ document.addEventListener("DOMContentLoaded", () => {
   earth.rotation.y = 0.6;
   scene.add(earth);
 
-  const atmosphereGeometry = new THREE.SphereGeometry(2.1, 48, 48);
-  const atmosphereMaterial = new THREE.MeshBasicMaterial({
-    color: 0xbce6ff,
-    transparent: true,
-    opacity: 0.18
-  });
+  const atmosphere = new THREE.Mesh(
+    new THREE.SphereGeometry(2.1, 96, 96),
+    new THREE.MeshBasicMaterial({
+      color: 0xbce6ff,
+      transparent: true,
+      opacity: 0.16
+    })
+  );
 
-  const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
   scene.add(atmosphere);
 
   const pinGroup = new THREE.Group();
-  scene.add(pinGroup);
+  earth.add(pinGroup);
 
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
@@ -107,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
     earth.rotation.x += moveY * 0.01;
 
     earth.rotation.x = Math.max(-1.1, Math.min(1.1, earth.rotation.x));
-
     atmosphere.rotation.copy(earth.rotation);
 
     previousX = e.clientX;
@@ -131,16 +135,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const hits = raycaster.intersectObject(earth);
 
     if (hits.length > 0) {
-      const point = hits[0].point.clone();
+      const localPoint = earth.worldToLocal(hits[0].point.clone());
 
       pinGroup.clear();
 
       const pin = createPin();
-      pin.position.copy(point.normalize().multiplyScalar(2.18));
+      pin.position.copy(localPoint.normalize().multiplyScalar(2.18));
       pin.lookAt(camera.position);
       pinGroup.add(pin);
 
-      selectedRegion = getRegionName(point);
+      selectedRegion = getRegionName(localPoint);
 
       if (regionName && regionPopup) {
         regionName.textContent = selectedRegion;
@@ -174,12 +178,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const pin = new THREE.Group();
 
     const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16),
+      new THREE.SphereGeometry(0.08, 20, 20),
       new THREE.MeshStandardMaterial({ color: 0xd94f45 })
     );
 
     const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.018, 0.018, 0.28, 12),
+      new THREE.CylinderGeometry(0.018, 0.018, 0.28, 16),
       new THREE.MeshStandardMaterial({ color: 0xd94f45 })
     );
 
@@ -192,34 +196,48 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getRegionName(point) {
-    const lat = THREE.MathUtils.radToDeg(Math.asin(point.y / point.length()));
-    const lon = THREE.MathUtils.radToDeg(Math.atan2(point.z, point.x));
+    const radius = point.length();
+    const lat = THREE.MathUtils.radToDeg(Math.asin(point.y / radius));
+    let lon = THREE.MathUtils.radToDeg(Math.atan2(point.z, point.x));
 
-    if (lat > 50) return "Northern Region";
-    if (lat < -35) return "Southern Region";
+    lon = lon - 90;
 
-    if (lon > -170 && lon < -30 && lat > 5) {
+    if (lon < -180) lon += 360;
+    if (lon > 180) lon -= 360;
+
+    if (lat > 72) return "Arctic Region";
+    if (lat < -60) return "Antarctica";
+
+    if (lat >= 15 && lat <= 72 && lon >= -170 && lon <= -50) {
       return "North America";
     }
 
-    if (lon > -90 && lon < -30 && lat < 15) {
+    if (lat >= -58 && lat <= 15 && lon >= -85 && lon <= -35) {
       return "South America";
     }
 
-    if (lon > -20 && lon < 55 && lat > -35) {
-      return "Africa";
-    }
-
-    if (lon > -15 && lon < 45 && lat > 35) {
+    if (lat >= 35 && lat <= 72 && lon >= -25 && lon <= 45) {
       return "Europe";
     }
 
-    if (lon > 45 && lon < 150 && lat > 5) {
+    if (lat >= -35 && lat <= 38 && lon >= -20 && lon <= 55) {
+      return "Africa";
+    }
+
+    if (lat >= 5 && lat <= 77 && lon >= 45 && lon <= 180) {
       return "Asia";
     }
 
-    if (lon > 105 && lon < 180 && lat < 5) {
+    if (lat >= -50 && lat <= 5 && lon >= 105 && lon <= 180) {
       return "Australia / Oceania";
+    }
+
+    if (lat >= 5 && lat <= 35 && lon >= -120 && lon <= -60) {
+      return "Central America / Caribbean";
+    }
+
+    if (lat >= 10 && lat <= 40 && lon >= 35 && lon <= 75) {
+      return "Middle East";
     }
 
     return "Ocean Region";
@@ -233,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     camera.updateProjectionMatrix();
 
     renderer.setSize(width, height, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
   }
 
   window.addEventListener("resize", resize);
