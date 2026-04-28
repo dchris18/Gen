@@ -6,6 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.querySelector(".globe-canvas");
   const stage = document.querySelector(".globe-stage");
 
+  const regionPopup = document.getElementById("regionPopup");
+  const regionName = document.getElementById("regionName");
+  const confirmRegion = document.getElementById("confirmRegion");
+  const cancelRegion = document.getElementById("cancelRegion");
+
   if (!canvas || !stage) return;
 
   const scene = new THREE.Scene();
@@ -69,12 +74,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
   scene.add(atmosphere);
 
+  const pinGroup = new THREE.Group();
+  scene.add(pinGroup);
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  let selectedRegion = "";
   let dragging = false;
+  let moved = false;
   let previousX = 0;
   let previousY = 0;
 
   canvas.addEventListener("mousedown", (e) => {
     dragging = true;
+    moved = false;
     previousX = e.clientX;
     previousY = e.clientY;
   });
@@ -84,6 +98,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const moveX = e.clientX - previousX;
     const moveY = e.clientY - previousY;
+
+    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) {
+      moved = true;
+    }
 
     earth.rotation.y += moveX * 0.01;
     earth.rotation.x += moveY * 0.01;
@@ -100,6 +118,48 @@ document.addEventListener("DOMContentLoaded", () => {
     dragging = false;
   });
 
+  canvas.addEventListener("click", (e) => {
+    if (moved) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const hits = raycaster.intersectObject(earth);
+
+    if (hits.length > 0) {
+      const point = hits[0].point.clone();
+
+      pinGroup.clear();
+
+      const pin = createPin();
+      pin.position.copy(point.normalize().multiplyScalar(2.18));
+      pin.lookAt(camera.position);
+      pinGroup.add(pin);
+
+      selectedRegion = getRegionName(point);
+
+      if (regionName && regionPopup) {
+        regionName.textContent = selectedRegion;
+        regionPopup.classList.add("show");
+      }
+    }
+  });
+
+  confirmRegion?.addEventListener("click", () => {
+    alert(`Region confirmed: ${selectedRegion}`);
+    regionPopup?.classList.remove("show");
+  });
+
+  cancelRegion?.addEventListener("click", () => {
+    selectedRegion = "";
+    pinGroup.clear();
+    regionPopup?.classList.remove("show");
+  });
+
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
 
@@ -109,6 +169,61 @@ document.addEventListener("DOMContentLoaded", () => {
     camera.position.set(0, 0, zoom);
     camera.lookAt(0, 0, 0);
   });
+
+  function createPin() {
+    const pin = new THREE.Group();
+
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 16, 16),
+      new THREE.MeshStandardMaterial({ color: 0xd94f45 })
+    );
+
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.018, 0.018, 0.28, 12),
+      new THREE.MeshStandardMaterial({ color: 0xd94f45 })
+    );
+
+    stem.position.y = -0.14;
+
+    pin.add(head);
+    pin.add(stem);
+
+    return pin;
+  }
+
+  function getRegionName(point) {
+    const lat = THREE.MathUtils.radToDeg(Math.asin(point.y / point.length()));
+    const lon = THREE.MathUtils.radToDeg(Math.atan2(point.z, point.x));
+
+    if (lat > 50) return "Northern Region";
+    if (lat < -35) return "Southern Region";
+
+    if (lon > -170 && lon < -30 && lat > 5) {
+      return "North America";
+    }
+
+    if (lon > -90 && lon < -30 && lat < 15) {
+      return "South America";
+    }
+
+    if (lon > -20 && lon < 55 && lat > -35) {
+      return "Africa";
+    }
+
+    if (lon > -15 && lon < 45 && lat > 35) {
+      return "Europe";
+    }
+
+    if (lon > 45 && lon < 150 && lat > 5) {
+      return "Asia";
+    }
+
+    if (lon > 105 && lon < 180 && lat < 5) {
+      return "Australia / Oceania";
+    }
+
+    return "Ocean Region";
+  }
 
   function resize() {
     const width = stage.clientWidth;
@@ -125,6 +240,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function animate() {
     requestAnimationFrame(animate);
+
+    pinGroup.children.forEach((pin) => {
+      pin.lookAt(camera.position);
+    });
+
     renderer.render(scene, camera);
   }
 

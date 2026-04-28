@@ -97,6 +97,61 @@ body {
   cursor: grabbing;
 }
 
+.region-popup {
+  position: absolute;
+  left: 50%;
+  top: 480px;
+  transform: translateX(-50%);
+  width: 250px;
+  background: #e7f3fb;
+  border: 2px solid #b9d8ed;
+  border-radius: 18px;
+  padding: 12px;
+  display: none;
+  z-index: 8;
+  text-align: center;
+  box-shadow:
+    0 4px 10px rgba(71, 110, 141, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.region-popup.show {
+  display: block;
+}
+
+.region-label {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #6b8aaa;
+}
+
+#regionName {
+  margin: 0 0 10px;
+  font-size: 22px;
+  color: #3f6486;
+}
+
+.region-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.region-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: #c9e2f3;
+  color: #3f6486;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.region-actions button:first-child {
+  background: #4b6f93;
+  color: #ffffff;
+}
+
 .bottom-nav {
   position: absolute;
   left: 8px;
