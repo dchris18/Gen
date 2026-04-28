@@ -61,8 +61,8 @@ button {
 
 .eye-button {
   position: absolute;
-  left: 10px;
-  bottom: 8px;
+  left: 12px;
+  bottom: 14px;
   width: 72px;
   height: 44px;
   border: none;
@@ -82,8 +82,8 @@ button {
 .grid-menu {
   position: absolute;
   left: 88px;
-  bottom: 12px;
-  padding: 8px;
+  bottom: 18px;
+  padding: 7px;
   border-radius: 14px;
   background: #f0dfb8;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
@@ -103,7 +103,7 @@ button {
   color: #7a4144;
   padding: 7px 9px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .tool-row {

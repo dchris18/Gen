@@ -50,7 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
       scene.remove(platform);
 
       platform.traverse((child) => {
-        if (child.geometry) child.geometry.dispose();
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
 
         if (child.material) {
           if (Array.isArray(child.material)) {
@@ -85,7 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
       edges,
       new THREE.LineBasicMaterial({ color: 0xf0dfb8 })
     );
-
     base.add(outline);
 
     const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
@@ -94,6 +95,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     platformGroup.rotation.x = 0.55;
     platformGroup.rotation.y = -0.75;
+    platformGroup.position.y = -0.2;
+
+    if (size === 3) {
+      platformGroup.scale.set(1.18, 1, 1.18);
+    } else if (size === 6) {
+      platformGroup.scale.set(1, 1, 1);
+    } else if (size === 9) {
+      platformGroup.scale.set(0.78, 1, 0.78);
+    }
 
     platform = platformGroup;
     scene.add(platform);
@@ -103,15 +113,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateCameraForSize(size) {
     if (size === 3) {
-      camera.position.set(3.4, 3.4, 5);
-    }
-
-    if (size === 6) {
       camera.position.set(5, 5, 7);
-    }
-
-    if (size === 9) {
-      camera.position.set(7, 7, 10);
+    } else if (size === 6) {
+      camera.position.set(5, 5, 7);
+    } else if (size === 9) {
+      camera.position.set(5, 5, 7);
     }
 
     camera.lookAt(0, 0, 0);
@@ -122,7 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
   gridButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const size = Number(button.dataset.grid);
-
       createPlatform(size);
       gridMenu.classList.remove("open");
     });
@@ -160,19 +165,14 @@ document.addEventListener("DOMContentLoaded", () => {
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
 
+    camera.position.z += e.deltaY * 0.003;
+
     if (currentSize === 3) {
-      camera.position.z += e.deltaY * 0.003;
-      camera.position.z = Math.max(3.8, Math.min(6.2, camera.position.z));
-    }
-
-    if (currentSize === 6) {
-      camera.position.z += e.deltaY * 0.003;
       camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
-    }
-
-    if (currentSize === 9) {
-      camera.position.z += e.deltaY * 0.003;
-      camera.position.z = Math.max(8, Math.min(12, camera.position.z));
+    } else if (currentSize === 6) {
+      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
+    } else if (currentSize === 9) {
+      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
     }
 
     camera.lookAt(0, 0, 0);
