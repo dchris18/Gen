@@ -183,9 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentSize === 3) {
       camera.position.z = Math.max(3, Math.min(10, camera.position.z));
     } else if (currentSize === 6) {
-      camera.position.z = Math.max(4, Math.min(12, camera.position.z));
+      camera.position.z = Math.max(4, Math.min(15, camera.position.z));
     } else if (currentSize === 9) {
-      camera.position.z = Math.max(5, Math.min(14, camera.position.z));
+      camera.position.z = Math.max(5, Math.min(20, camera.position.z));
     }
 
     camera.lookAt(0, 0, 0);
