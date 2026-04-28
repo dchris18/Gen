@@ -1,174 +1,187 @@
 "use strict";
 
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.querySelector(".garden-container");
-  const eyeButton = document.querySelector(".eye-icon");
+  const eyeButton = document.querySelector(".eye-button");
+  const gridMenu = document.querySelector(".grid-menu");
+  const gridButtons = document.querySelectorAll("[data-grid]");
+  const toolButtons = document.querySelectorAll(".tool-btn");
+  const container = document.querySelector("#three-platform");
 
-  let scene;
-  let camera;
-  let renderer;
-  let controls;
-  let platform;
-  let gridHelper;
+  eyeButton.addEventListener("click", () => {
+    gridMenu.classList.toggle("open");
+  });
 
-  let currentGridSize = 6;
-
-  init();
-  createSizeMenu();
-  createPlatform(currentGridSize);
-  animate();
-
-  function init() {
-    scene = new THREE.Scene();
-
-    camera = new THREE.PerspectiveCamera(
-      45,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      1000
-    );
-
-    camera.position.set(0, 8, 10);
-
-    renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      toolButtons.forEach((item) => item.classList.remove("selected"));
+      button.classList.add("selected");
     });
+  });
 
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+  const camera = new THREE.PerspectiveCamera(45, 300 / 560, 0.1, 100);
+  camera.position.set(5, 5, 7);
+  camera.lookAt(0, 0, 0);
 
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+  const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true
+  });
 
-    controls.enableZoom = true;
-    controls.minDistance = 1.2;
-    controls.maxDistance = 80;
-    controls.zoomSpeed = 1.3;
+  renderer.setSize(300, 560);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
 
-    controls.enablePan = true;
-    controls.target.set(0, 0, 0);
-    controls.update();
+  const light = new THREE.DirectionalLight(0xffffff, 1.8);
+  light.position.set(3, 5, 4);
+  scene.add(light);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(ambientLight);
+  const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+  scene.add(ambient);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    directionalLight.position.set(4, 8, 6);
-    scene.add(directionalLight);
+  let platform;
+  let currentSize = 6;
 
-    window.addEventListener("resize", onWindowResize);
-  }
-
-  function createPlatform(gridSize) {
+  function createPlatform(size) {
     if (platform) {
       scene.remove(platform);
-      platform.geometry.dispose();
-      platform.material.dispose();
+
+      platform.traverse((child) => {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
     }
 
-    if (gridHelper) {
-      scene.remove(gridHelper);
-      gridHelper.geometry.dispose();
-      gridHelper.material.dispose();
-    }
+    currentSize = size;
 
-    const scaleAmount = 0.45;
-    const platformSize = gridSize * scaleAmount;
+    const platformGroup = new THREE.Group();
 
-    const platformGeometry = new THREE.BoxGeometry(
-      platformSize,
-      0.18,
-      platformSize
+    const platformGeometry = new THREE.BoxGeometry(size, 0.35, size);
+
+    const platformMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0x5f7852 }),
+      new THREE.MeshStandardMaterial({ color: 0x4f6744 }),
+      new THREE.MeshStandardMaterial({ color: 0x6f875e }),
+      new THREE.MeshStandardMaterial({ color: 0x3f5237 }),
+      new THREE.MeshStandardMaterial({ color: 0x5a704c }),
+      new THREE.MeshStandardMaterial({ color: 0x465d3e })
+    ];
+
+    const base = new THREE.Mesh(platformGeometry, platformMaterials);
+    platformGroup.add(base);
+
+    const edges = new THREE.EdgesGeometry(platformGeometry);
+    const outline = new THREE.LineSegments(
+      edges,
+      new THREE.LineBasicMaterial({ color: 0xf0dfb8 })
     );
+    base.add(outline);
 
-    const platformMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd7c4a3,
-      roughness: 0.8,
-      metalness: 0.05
-    });
+    const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
+    grid.position.y = 0.181;
+    platformGroup.add(grid);
 
-    platform = new THREE.Mesh(platformGeometry, platformMaterial);
-    platform.position.y = -0.1;
+    platformGroup.rotation.x = 0.55;
+    platformGroup.rotation.y = -0.75;
+    platformGroup.position.y = -0.2;
+
+    if (size === 3) {
+      platformGroup.scale.set(1.18, 1, 1.18);
+    } else if (size === 6) {
+      platformGroup.scale.set(1, 1, 1);
+    } else if (size === 9) {
+      platformGroup.scale.set(0.78, 1, 0.78);
+    }
+
+    platform = platformGroup;
     scene.add(platform);
 
-    gridHelper = new THREE.GridHelper(
-      platformSize,
-      gridSize,
-      0x6f5f45,
-      0x9b8765
-    );
-
-    gridHelper.position.y = 0.01;
-    scene.add(gridHelper);
-
-    currentGridSize = gridSize;
+    updateCameraForSize(size);
   }
 
-  function createSizeMenu() {
-    if (!eyeButton) return;
+  function updateCameraForSize(size) {
+    if (size === 3) {
+      camera.position.set(5, 5, 7);
+    } else if (size === 6) {
+      camera.position.set(5, 5, 7);
+    } else if (size === 9) {
+      camera.position.set(5, 5, 7);
+    }
 
-    eyeButton.style.position = "absolute";
-    eyeButton.style.left = "14px";
-    eyeButton.style.top = "50%";
-    eyeButton.style.transform = "translateY(-50%)";
-    eyeButton.style.zIndex = "20";
-    eyeButton.style.cursor = "pointer";
+    camera.lookAt(0, 0, 0);
+  }
 
-    const menu = document.createElement("div");
-    menu.classList.add("grid-size-menu");
+  createPlatform(6);
 
-    menu.innerHTML = `
-      <button data-size="3">3x3</button>
-      <button data-size="6">6x6</button>
-      <button data-size="9">9x9</button>
-    `;
-
-    menu.style.position = "absolute";
-    menu.style.left = "55px";
-    menu.style.top = "50%";
-    menu.style.transform = "translateY(-50%)";
-    menu.style.display = "none";
-    menu.style.flexDirection = "column";
-    menu.style.gap = "8px";
-    menu.style.zIndex = "25";
-
-    container.style.position = "relative";
-    container.appendChild(menu);
-
-    eyeButton.addEventListener("click", () => {
-      if (menu.style.display === "none") {
-        menu.style.display = "flex";
-      } else {
-        menu.style.display = "none";
-      }
+  gridButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const size = Number(button.dataset.grid);
+      createPlatform(size);
+      gridMenu.classList.remove("open");
     });
+  });
 
-    const buttons = menu.querySelectorAll("button");
+  let dragging = false;
+  let previousX = 0;
+  let previousY = 0;
 
-    buttons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const newSize = Number(button.dataset.size);
-        createPlatform(newSize);
-        menu.style.display = "none";
-      });
-    });
-  }
+  container.addEventListener("mousedown", (e) => {
+    dragging = true;
+    previousX = e.clientX;
+    previousY = e.clientY;
+  });
 
-  function onWindowResize() {
-    camera.aspect = container.clientWidth / container.clientHeight;
-    camera.updateProjectionMatrix();
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging || !platform) return;
 
-    renderer.setSize(container.clientWidth, container.clientHeight);
-  }
+    const moveX = e.clientX - previousX;
+    const moveY = e.clientY - previousY;
+
+    platform.rotation.y += moveX * 0.01;
+    platform.rotation.x += moveY * 0.01;
+
+    platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
+
+    previousX = e.clientX;
+    previousY = e.clientY;
+  });
+
+  document.addEventListener("mouseup", () => {
+    dragging = false;
+  });
+
+  container.addEventListener("wheel", (e) => {
+    e.preventDefault();
+
+    camera.position.z += e.deltaY * 0.003;
+
+    if (currentSize === 3) {
+      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
+    } else if (currentSize === 6) {
+      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
+    } else if (currentSize === 9) {
+      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
+    }
+
+    camera.lookAt(0, 0, 0);
+  });
 
   function animate() {
     requestAnimationFrame(animate);
-
-    controls.update();
     renderer.render(scene, camera);
   }
+
+  animate();
 });
