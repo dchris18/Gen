@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
   scene.add(rimLight);
 
   const textureLoader = new THREE.TextureLoader();
-  const earthTexture = textureLoader.load("../photos/Earth.png");
+ const earthTexture = textureLoader.load("../photos/Earth.jpg");
 
   earthTexture.colorSpace = THREE.SRGBColorSpace;
   earthTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
