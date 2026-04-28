@@ -68,6 +68,22 @@ button {
   box-shadow:
     0 7px 14px rgba(0, 0, 0, 0.18),
     inset 0 0 0 4px rgba(232, 178, 146, 0.35);
+  overflow: hidden;
+}
+
+/* real 3d platform area */
+#three-platform {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+
+#three-platform:active {
+  cursor: grabbing;
+}
+
+#three-platform canvas {
+  display: block;
 }
 
 .eye-button {
@@ -80,6 +96,7 @@ button {
   background: transparent;
   padding: 0;
   cursor: pointer;
+  z-index: 5;
 }
 
 .eye-icon {
@@ -106,6 +123,11 @@ button {
   background: transparent;
   padding: 0;
   cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.tool-btn.selected {
+  transform: translateY(-10px) scale(1.08);
 }
 
 .tool-btn img {
