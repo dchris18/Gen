@@ -167,8 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
 
-    camera.position.z += e.deltaY * 0.009;
-    camera.position.z = Math.max(4.5, Math.min(10, camera.position.z));
+    camera.position.z += e.deltaY * 0.030;
+    camera.position.z = Math.max(3, Math.min(15, camera.position.z));
 
     camera.lookAt(0, 0, 0);
   });
