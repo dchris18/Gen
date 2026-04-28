@@ -9,9 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const toolButtons = document.querySelectorAll(".tool-btn");
   const container = document.querySelector("#three-platform");
 
-  eyeButton.addEventListener("click", () => {
-    gridMenu.classList.toggle("open");
-  });
+  if (!container) {
+    console.error("Missing #three-platform div in HTML");
+    return;
+  }
+
+  if (eyeButton && gridMenu) {
+    eyeButton.addEventListener("click", () => {
+      gridMenu.classList.toggle("open");
+    });
+  }
 
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -22,7 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(45, 300 / 560, 0.1, 100);
+  const width = container.clientWidth || 300;
+  const height = container.clientHeight || 560;
+
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
   camera.position.set(5, 5, 7);
   camera.lookAt(0, 0, 0);
 
@@ -31,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     antialias: true
   });
 
-  renderer.setSize(300, 560);
+  renderer.setSize(width, height);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
 
@@ -98,28 +108,17 @@ document.addEventListener("DOMContentLoaded", () => {
     platformGroup.position.y = -0.2;
 
     if (size === 3) {
-      platformGroup.scale.set(1.18, 1, 1.18);
+      platformGroup.scale.set(1.15, 1, 1.15);
     } else if (size === 6) {
-      platformGroup.scale.set(1, 1, 1);
+      platformGroup.scale.set(0.95, 1, 0.95);
     } else if (size === 9) {
-      platformGroup.scale.set(0.78, 1, 0.78);
+      platformGroup.scale.set(0.75, 1, 0.75);
     }
 
     platform = platformGroup;
     scene.add(platform);
 
-    updateCameraForSize(size);
-  }
-
-  function updateCameraForSize(size) {
-    if (size === 3) {
-      camera.position.set(5, 5, 7);
-    } else if (size === 6) {
-      camera.position.set(5, 5, 7);
-    } else if (size === 9) {
-      camera.position.set(5, 5, 7);
-    }
-
+    camera.position.set(5, 5, 7);
     camera.lookAt(0, 0, 0);
   }
 
@@ -129,7 +128,10 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       const size = Number(button.dataset.grid);
       createPlatform(size);
-      gridMenu.classList.remove("open");
+
+      if (gridMenu) {
+        gridMenu.classList.remove("open");
+      }
     });
   });
 
@@ -166,14 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
     camera.position.z += e.deltaY * 0.003;
-
-    if (currentSize === 3) {
-      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
-    } else if (currentSize === 6) {
-      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
-    } else if (currentSize === 9) {
-      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
-    }
+    camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
 
     camera.lookAt(0, 0, 0);
   });
