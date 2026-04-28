@@ -22,10 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const scene = new THREE.Scene();
 
-  let zoom = 6;
-
   const camera = new THREE.PerspectiveCamera(45, 300 / 560, 0.1, 100);
-  camera.position.set(4, 4, zoom);
+  camera.position.set(5, 5, 7);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({
@@ -45,23 +43,32 @@ document.addEventListener("DOMContentLoaded", () => {
   scene.add(ambient);
 
   let platform;
+  let currentSize = 6;
 
-  function makePlatform(size) {
+  function createPlatform(size) {
     if (platform) {
       scene.remove(platform);
 
-      platform.geometry.dispose();
+      platform.traverse((child) => {
+        if (child.geometry) child.geometry.dispose();
 
-      if (Array.isArray(platform.material)) {
-        platform.material.forEach((mat) => mat.dispose());
-      } else {
-        platform.material.dispose();
-      }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
     }
+
+    currentSize = size;
+
+    const platformGroup = new THREE.Group();
 
     const platformGeometry = new THREE.BoxGeometry(size, 0.35, size);
 
-    const materials = [
+    const platformMaterials = [
       new THREE.MeshStandardMaterial({ color: 0x5f7852 }),
       new THREE.MeshStandardMaterial({ color: 0x4f6744 }),
       new THREE.MeshStandardMaterial({ color: 0x6f875e }),
@@ -70,12 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
       new THREE.MeshStandardMaterial({ color: 0x465d3e })
     ];
 
-    platform = new THREE.Mesh(platformGeometry, materials);
-
-    platform.rotation.x = 0.55;
-    platform.rotation.y = -0.75;
-
-    scene.add(platform);
+    const base = new THREE.Mesh(platformGeometry, platformMaterials);
+    platformGroup.add(base);
 
     const edges = new THREE.EdgesGeometry(platformGeometry);
     const outline = new THREE.LineSegments(
@@ -83,30 +86,44 @@ document.addEventListener("DOMContentLoaded", () => {
       new THREE.LineBasicMaterial({ color: 0xf0dfb8 })
     );
 
-    platform.add(outline);
+    base.add(outline);
 
-    const grid = new THREE.GridHelper(size, size, 0x8ca27a, 0x8ca27a);
+    const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
     grid.position.y = 0.181;
-    platform.add(grid);
+    platformGroup.add(grid);
 
+    platformGroup.rotation.x = 0.55;
+    platformGroup.rotation.y = -0.75;
+
+    platform = platformGroup;
+    scene.add(platform);
+
+    updateCameraForSize(size);
+  }
+
+  function updateCameraForSize(size) {
     if (size === 3) {
-      zoom = 5.2;
-    } else if (size === 6) {
-      zoom = 7;
-    } else {
-      zoom = 9.2;
+      camera.position.set(3.4, 3.4, 5);
     }
 
-    camera.position.set(4, 4, zoom);
+    if (size === 6) {
+      camera.position.set(5, 5, 7);
+    }
+
+    if (size === 9) {
+      camera.position.set(7, 7, 10);
+    }
+
     camera.lookAt(0, 0, 0);
   }
 
-  makePlatform(6);
+  createPlatform(6);
 
   gridButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const size = Number(button.dataset.grid);
-      makePlatform(size);
+
+      createPlatform(size);
       gridMenu.classList.remove("open");
     });
   });
@@ -130,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     platform.rotation.y += moveX * 0.01;
     platform.rotation.x += moveY * 0.01;
 
-    platform.rotation.x = Math.max(-0.4, Math.min(0.8, platform.rotation.x));
+    platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
 
     previousX = e.clientX;
     previousY = e.clientY;
@@ -143,10 +160,21 @@ document.addEventListener("DOMContentLoaded", () => {
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
 
-    zoom += e.deltaY * 0.003;
-    zoom = Math.max(4.5, Math.min(10, zoom));
+    if (currentSize === 3) {
+      camera.position.z += e.deltaY * 0.003;
+      camera.position.z = Math.max(3.8, Math.min(6.2, camera.position.z));
+    }
 
-    camera.position.set(4, 4, zoom);
+    if (currentSize === 6) {
+      camera.position.z += e.deltaY * 0.003;
+      camera.position.z = Math.max(5.5, Math.min(8.5, camera.position.z));
+    }
+
+    if (currentSize === 9) {
+      camera.position.z += e.deltaY * 0.003;
+      camera.position.z = Math.max(8, Math.min(12, camera.position.z));
+    }
+
     camera.lookAt(0, 0, 0);
   });
 
