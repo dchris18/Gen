@@ -16,14 +16,13 @@ body {
   place-items: center;
   background: #1d1d1d;
   font-family: 'PPNeueMontreal', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 button {
   font: inherit;
 }
 
+/* phone screen */
 .screen {
   position: relative;
   width: 320px;
@@ -32,36 +31,13 @@ button {
   background: #7f8d7b;
 }
 
-/* top title */
-.title-pill {
-  position: absolute;
-  top: 24px;
-  left: 16px;
-  width: 288px;
-  height: 54px;
-  border-radius: 18px;
-  background: #f0dfb8;
-  box-shadow: 0 0 14px rgba(255, 242, 196, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1;
-  letter-spacing: -0.8px;
-  color: #7a4144;
-}
-
 /* planner board */
 .planner-board {
   position: absolute;
-  top: 92px;
+  top: 24px;
   left: 10px;
   width: 300px;
-  height: 492px;
+  height: 560px;
   border-radius: 20px;
   background: #9a8164;
   border: 8px solid #de9572;
@@ -71,7 +47,6 @@ button {
   overflow: hidden;
 }
 
-/* real 3d platform area */
 #three-platform {
   position: absolute;
   inset: 0;
@@ -86,6 +61,7 @@ button {
   display: block;
 }
 
+/* eye button */
 .eye-button {
   position: absolute;
   right: 10px;
@@ -96,7 +72,7 @@ button {
   background: transparent;
   padding: 0;
   cursor: pointer;
-  z-index: 5;
+  z-index: 8;
 }
 
 .eye-icon {
@@ -104,6 +80,61 @@ button {
   height: 100%;
   display: block;
   filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.12));
+}
+
+/* grid popup menu */
+.grid-menu {
+  position: absolute;
+  right: 10px;
+  bottom: 58px;
+  width: 130px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #f0dfb8;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.grid-menu.open {
+  display: flex;
+}
+
+.grid-menu p {
+  margin: 0 0 2px;
+  font-size: 14px;
+  color: #7a4144;
+  text-align: center;
+}
+
+.grid-menu button {
+  border: none;
+  border-radius: 9px;
+  background: #de9572;
+  color: #7a4144;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.custom-row {
+  display: flex;
+  gap: 5px;
+}
+
+.custom-row input {
+  width: 58px;
+  border: none;
+  border-radius: 8px;
+  padding: 5px;
+  font-family: inherit;
+  color: #7a4144;
+}
+
+.custom-row button {
+  flex: 1;
+  font-size: 12px;
 }
 
 /* bottom tools */
@@ -140,15 +171,12 @@ button {
 
 .tool-trowel img {
   width: 86px;
-  height: auto;
 }
 
 .tool-pot img {
   width: 76px;
-  height: auto;
 }
 
 .tool-shears img {
   width: 88px;
-  height: auto;
 }

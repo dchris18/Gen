@@ -4,19 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Page 2</title>
-<link rel="stylesheet" href="./page2.css" />
+    <link rel="stylesheet" href="./page2.css" />
   </head>
 
   <body>
     <main class="screen">
-      <div class="title-pill">
-        <h1 class="title">Plan Your Garden</h1>
-      </div>
-
       <section class="planner-board" aria-label="Garden planner board">
         <div id="three-platform"></div>
 
-        <button class="eye-button" aria-label="Preview garden">
+        <button class="eye-button" aria-label="Edit grid size">
           <svg viewBox="0 0 120 70" class="eye-icon" aria-hidden="true">
             <path
               d="M8 35C20 20 37 10 60 10C83 10 100 20 112 35C100 50 83 60 60 60C37 60 20 50 8 35Z"
@@ -26,6 +22,20 @@
             <circle cx="54" cy="29" r="8" fill="#ece8c9" opacity="0.95" />
           </svg>
         </button>
+
+        <div class="grid-menu">
+          <p>Grid Size</p>
+
+          <button data-grid="3">3x3</button>
+          <button data-grid="5">5x5</button>
+          <button data-grid="7">7x7</button>
+          <button data-grid="9">9x9</button>
+
+          <div class="custom-row">
+            <input id="custom-grid" type="number" min="2" max="20" placeholder="Custom" />
+            <button id="apply-grid">Apply</button>
+          </div>
+        </div>
       </section>
 
       <div class="tool-row">
@@ -43,6 +53,6 @@
       </div>
     </main>
 
-<script type="module" src="./page2.js"></script>
+    <script type="module" src="./page2.js"></script>
   </body>
 </html>

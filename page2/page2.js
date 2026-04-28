@@ -4,11 +4,16 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const eyeButton = document.querySelector(".eye-button");
+  const gridMenu = document.querySelector(".grid-menu");
+  const gridButtons = document.querySelectorAll("[data-grid]");
+  const customGridInput = document.querySelector("#custom-grid");
+  const applyGridButton = document.querySelector("#apply-grid");
+
   const toolButtons = document.querySelectorAll(".tool-btn");
   const container = document.querySelector("#three-platform");
 
-  eyeButton?.addEventListener("click", () => {
-    alert("Preview mode");
+  eyeButton.addEventListener("click", () => {
+    gridMenu.classList.toggle("open");
   });
 
   toolButtons.forEach((button) => {
@@ -22,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let zoom = 6;
 
-  const camera = new THREE.PerspectiveCamera(45, 300 / 492, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(45, 300 / 560, 0.1, 100);
   camera.position.set(4, 4, zoom);
   camera.lookAt(0, 0, 0);
 
@@ -31,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     antialias: true
   });
 
-  renderer.setSize(300, 492);
+  renderer.setSize(300, 560);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
 
@@ -56,9 +61,41 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   platform.add(outline);
 
-  const grid = new THREE.GridHelper(3.8, 8, 0x8ca27a, 0x8ca27a);
-  grid.position.y = 0.181;
-  platform.add(grid);
+  let grid;
+
+  function makeGrid(size) {
+    if (grid) {
+      platform.remove(grid);
+      grid.geometry.dispose();
+      grid.material.dispose();
+    }
+
+    grid = new THREE.GridHelper(3.8, size, 0x8ca27a, 0x8ca27a);
+    grid.position.y = 0.181;
+    platform.add(grid);
+  }
+
+  makeGrid(5);
+
+  gridButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const size = Number(button.dataset.grid);
+      makeGrid(size);
+      gridMenu.classList.remove("open");
+    });
+  });
+
+  applyGridButton.addEventListener("click", () => {
+    const size = Number(customGridInput.value);
+
+    if (size >= 2 && size <= 20) {
+      makeGrid(size);
+      gridMenu.classList.remove("open");
+      customGridInput.value = "";
+    } else {
+      alert("Choose a number between 2 and 20.");
+    }
+  });
 
   const light = new THREE.DirectionalLight(0xffffff, 1.8);
   light.position.set(3, 5, 4);
