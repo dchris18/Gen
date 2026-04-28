@@ -20,8 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const scene = new THREE.Scene();
 
+  let zoom = 6;
+
   const camera = new THREE.PerspectiveCamera(45, 300 / 492, 0.1, 100);
-  camera.position.set(4, 4, 5);
+  camera.position.set(4, 4, zoom);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({
@@ -69,6 +71,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let previousX = 0;
   let previousY = 0;
 
+  platform.rotation.x = 0.55;
+  platform.rotation.y = -0.75;
+
   container.addEventListener("mousedown", (e) => {
     dragging = true;
     previousX = e.clientX;
@@ -84,6 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
     platform.rotation.y += moveX * 0.01;
     platform.rotation.x += moveY * 0.01;
 
+    platform.rotation.x = Math.max(-0.4, Math.min(0.8, platform.rotation.x));
+
     previousX = e.clientX;
     previousY = e.clientY;
   });
@@ -92,8 +99,15 @@ document.addEventListener("DOMContentLoaded", () => {
     dragging = false;
   });
 
-  platform.rotation.x = 0.55;
-  platform.rotation.y = -0.75;
+  container.addEventListener("wheel", (e) => {
+    e.preventDefault();
+
+    zoom += e.deltaY * 0.003;
+    zoom = Math.max(4.5, Math.min(7.5, zoom));
+
+    camera.position.set(4, 4, zoom);
+    camera.lookAt(0, 0, 0);
+  });
 
   function animate() {
     requestAnimationFrame(animate);
