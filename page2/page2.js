@@ -719,7 +719,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tileGroup.position.y = 0;
 
         const visibleTile = new THREE.Mesh(
-          new THREE.BoxGeometry(0.96, 0.35, 0.96),
+new THREE.BoxGeometry(1.01, 0.35, 1.01)
           [
             materials.tileSide,
             materials.tileSide,
@@ -735,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
         visibleTile.receiveShadow = true;
 
         const clickTile = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.96, 0.96),
+new THREE.PlaneGeometry(1, 1)
           new THREE.MeshBasicMaterial({
             transparent: true,
             opacity: 0,
@@ -836,6 +836,12 @@ document.addEventListener("DOMContentLoaded", () => {
         platformGroup.add(tileGroup);
       }
     }
+
+const creamGrid = new THREE.GridHelper(size, size, 0xf0dfb8, 0xf0dfb8);
+creamGrid.position.y = 0.235;
+creamGrid.material.transparent = true;
+creamGrid.material.opacity = 0.75;
+platformGroup.add(creamGrid);
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
