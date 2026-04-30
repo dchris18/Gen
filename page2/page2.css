@@ -34,8 +34,8 @@ button {
 .save-button {
   position: absolute;
   left: 15px;
-  width: 60px;
-  height: 60px;
+  width: 55px;
+  height: 55px;
   border: none;
   background: transparent;
   padding: 0;
@@ -48,7 +48,7 @@ button {
 }
 
 .save-button {
-  top: 85px; /* sits right below bookmark */
+  top: 83px; /* sits right below bookmark */
 }
 
 .name-save-popup,
