@@ -563,6 +563,31 @@ function createPlatform(size) {
     }
   }
 
+const lineMaterial = new THREE.LineBasicMaterial({
+  color: 0xf0dfb8,
+  transparent: true,
+  opacity: 0.6
+});
+
+for (let i = 0; i <= size; i++) {
+  const pos = i - size / 2;
+
+  // vertical lines
+  const vGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(pos, 0.21, -size / 2),
+    new THREE.Vector3(pos, 0.21, size / 2)
+  ]);
+
+  // horizontal lines
+  const hGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-size / 2, 0.21, pos),
+    new THREE.Vector3(size / 2, 0.21, pos)
+  ]);
+
+  platformGroup.add(new THREE.Line(vGeo, lineMaterial));
+  platformGroup.add(new THREE.Line(hGeo, lineMaterial));
+}
+
   platformGroup.rotation.x = savedRotation.x;
   platformGroup.rotation.y = savedRotation.y;
   platformGroup.position.set(0, -0.2, 0);
