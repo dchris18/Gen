@@ -418,194 +418,171 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 180);
   }
 
-  function createPlatform(size) {
-    if (platform) {
-      savedRotation.x = platform.rotation.x;
-      savedRotation.y = platform.rotation.y;
-      scene.remove(platform);
-    }
-
-    currentSize = size;
-    selectedSquare = null;
-    tileMeshes = [];
-    plantedItems = {};
-    tileWaitingForRemoval = null;
-    removedTileIds = [];
-
-    if (removePopup) removePopup.classList.remove("open");
-
-    const platformGroup = new THREE.Group();
-
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        const tileGroup = new THREE.Group();
-
-        tileGroup.position.x = col - size / 2 + 0.5;
-        tileGroup.position.z = row - size / 2 + 0.5;
-        tileGroup.position.y = 0;
-
-        const visibleTile = new THREE.Mesh(
-new THREE.BoxGeometry(1, 0.35, 1)
-          [
-            materials.tileSide,
-            materials.tileSide,
-            materials.tileTop,
-            materials.tileSide,
-            materials.tileSide,
-            materials.tileSide
-          ]
-        );
-
-        visibleTile.position.y = 0;
-        visibleTile.castShadow = true;
-        visibleTile.receiveShadow = true;
-
-        const clickTile = new THREE.Mesh(
-new THREE.PlaneGeometry(1, 1)
-          new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        clickTile.rotation.x = -Math.PI / 2;
-        clickTile.position.y = 0.19;
-        clickTile.userData.isTile = true;
-        clickTile.userData.tileId = `${row}-${col}`;
-        clickTile.userData.tileGroup = tileGroup;
-        clickTile.userData.visibleTile = visibleTile;
-        clickTile.userData.removed = false;
-
-        const outerGlow = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.08, 1.08),
-          new THREE.MeshBasicMaterial({
-            color: 0xffdf8a,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        outerGlow.rotation.x = -Math.PI / 2;
-        outerGlow.position.y = 0.205;
-
-        const glow = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.9, 0.9),
-          new THREE.MeshBasicMaterial({
-            color: 0xfff1b8,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        glow.rotation.x = -Math.PI / 2;
-        glow.position.y = 0.215;
-
-        const redGlow = new THREE.Mesh(
-new THREE.PlaneGeometry(1, 1)
-          new THREE.MeshBasicMaterial({
-            color: 0xff4b4b,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        redGlow.rotation.x = -Math.PI / 2;
-        redGlow.position.y = 0.225;
-
-        const border = new THREE.LineSegments(
-          new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
-          new THREE.LineBasicMaterial({
-            color: 0xfff1b8,
-            transparent: true,
-            opacity: 0
-          })
-        );
-
-        border.rotation.x = -Math.PI / 2;
-        border.position.y = 0.24;
-
-        const raisedHighlight = new THREE.Mesh(
-          new THREE.BoxGeometry(0.78, 0.045, 0.78),
-          new THREE.MeshBasicMaterial({
-            color: 0xfff4c7,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false
-          })
-        );
-
-        raisedHighlight.position.y = 0.215;
-
-        clickTile.userData.outerGlow = outerGlow;
-        clickTile.userData.glow = glow;
-        clickTile.userData.redGlow = redGlow;
-        clickTile.userData.border = border;
-        clickTile.userData.raisedHighlight = raisedHighlight;
-
-        tileGroup.add(visibleTile);
-        tileGroup.add(clickTile);
-        tileGroup.add(outerGlow);
-        tileGroup.add(glow);
-        tileGroup.add(redGlow);
-        tileGroup.add(border);
-        tileGroup.add(raisedHighlight);
-
-        tileMeshes.push(clickTile);
-        platformGroup.add(tileGroup);
-      }
-    }
-
-    const lineMaterial = new THREE.LineBasicMaterial({
-  color: 0xf0dfb8,
-  transparent: true,
-  opacity: 0.65
-});
-
-for (let i = 0; i <= size; i++) {
-  const pos = i - size / 2;
-
-  const verticalGeometry = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(pos, 0.235, -size / 2),
-    new THREE.Vector3(pos, 0.235, size / 2)
-  ]);
-
-  const horizontalGeometry = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-size / 2, 0.236, pos),
-    new THREE.Vector3(size / 2, 0.236, pos)
-  ]);
-
-  platformGroup.add(new THREE.Line(verticalGeometry, lineMaterial));
-  platformGroup.add(new THREE.Line(horizontalGeometry, lineMaterial));
-}
-
-    platformGroup.rotation.x = savedRotation.x;
-    platformGroup.rotation.y = savedRotation.y;
-    platformGroup.position.set(0, -0.2, 0);
-
-    if (size === 3) {
-      platformGroup.scale.set(1.15, 1, 1.15);
-      camera.position.set(5, 5, 7);
-    } else if (size === 6) {
-      platformGroup.scale.set(0.95, 1, 0.95);
-      camera.position.set(5, 5, 7.8);
-    } else {
-      platformGroup.scale.set(0.75, 1, 0.75);
-      camera.position.set(5, 5, 9.5);
-    }
-
-    camera.lookAt(0, 0, 0);
-
-    platform = platformGroup;
-    scene.add(platform);
+function createPlatform(size) {
+  if (platform) {
+    savedRotation.x = platform.rotation.x;
+    savedRotation.y = platform.rotation.y;
+    scene.remove(platform);
   }
+
+  currentSize = size;
+  selectedSquare = null;
+  tileMeshes = [];
+  plantedItems = {};
+  tileWaitingForRemoval = null;
+  removedTileIds = [];
+
+  if (removePopup) removePopup.classList.remove("open");
+
+  const platformGroup = new THREE.Group();
+
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const tileGroup = new THREE.Group();
+
+      tileGroup.position.x = col - size / 2 + 0.5;
+      tileGroup.position.z = row - size / 2 + 0.5;
+      tileGroup.position.y = 0;
+
+      const visibleTile = new THREE.Mesh(
+        new THREE.BoxGeometry(0.96, 0.35, 0.96),
+        [
+          materials.tileSide,
+          materials.tileSide,
+          materials.tileTop,
+          materials.tileSide,
+          materials.tileSide,
+          materials.tileSide
+        ]
+      );
+
+      visibleTile.position.y = 0;
+      visibleTile.castShadow = true;
+      visibleTile.receiveShadow = true;
+
+      const clickTile = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.96, 0.96),
+        new THREE.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+
+      clickTile.rotation.x = -Math.PI / 2;
+      clickTile.position.y = 0.19;
+      clickTile.userData.isTile = true;
+      clickTile.userData.tileId = `${row}-${col}`;
+      clickTile.userData.tileGroup = tileGroup;
+      clickTile.userData.visibleTile = visibleTile;
+      clickTile.userData.removed = false;
+
+      const outerGlow = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.08, 1.08),
+        new THREE.MeshBasicMaterial({
+          color: 0xffdf8a,
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+
+      outerGlow.rotation.x = -Math.PI / 2;
+      outerGlow.position.y = 0.205;
+
+      const glow = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.9, 0.9),
+        new THREE.MeshBasicMaterial({
+          color: 0xfff1b8,
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+
+      glow.rotation.x = -Math.PI / 2;
+      glow.position.y = 0.215;
+
+      const redGlow = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.08, 1.08),
+        new THREE.MeshBasicMaterial({
+          color: 0xff4b4b,
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+
+      redGlow.rotation.x = -Math.PI / 2;
+      redGlow.position.y = 0.225;
+
+      const border = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
+        new THREE.LineBasicMaterial({
+          color: 0xfff1b8,
+          transparent: true,
+          opacity: 0
+        })
+      );
+
+      border.rotation.x = -Math.PI / 2;
+      border.position.y = 0.24;
+
+      const raisedHighlight = new THREE.Mesh(
+        new THREE.BoxGeometry(0.78, 0.045, 0.78),
+        new THREE.MeshBasicMaterial({
+          color: 0xfff4c7,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false
+        })
+      );
+
+      raisedHighlight.position.y = 0.215;
+
+      clickTile.userData.outerGlow = outerGlow;
+      clickTile.userData.glow = glow;
+      clickTile.userData.redGlow = redGlow;
+      clickTile.userData.border = border;
+      clickTile.userData.raisedHighlight = raisedHighlight;
+
+      tileGroup.add(visibleTile);
+      tileGroup.add(clickTile);
+      tileGroup.add(outerGlow);
+      tileGroup.add(glow);
+      tileGroup.add(redGlow);
+      tileGroup.add(border);
+      tileGroup.add(raisedHighlight);
+
+      tileMeshes.push(clickTile);
+      platformGroup.add(tileGroup);
+    }
+  }
+
+  platformGroup.rotation.x = savedRotation.x;
+  platformGroup.rotation.y = savedRotation.y;
+  platformGroup.position.set(0, -0.2, 0);
+
+  if (size === 3) {
+    platformGroup.scale.set(1.15, 1, 1.15);
+    camera.position.set(5, 5, 7);
+  } else if (size === 6) {
+    platformGroup.scale.set(0.95, 1, 0.95);
+    camera.position.set(5, 5, 7.8);
+  } else {
+    platformGroup.scale.set(0.75, 1, 0.75);
+    camera.position.set(5, 5, 9.5);
+  }
+
+  camera.lookAt(0, 0, 0);
+
+  platform = platformGroup;
+  scene.add(platform);
+}
 
   createPlatform(6);
 
