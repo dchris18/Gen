@@ -72,7 +72,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }),
     tileSide: new THREE.MeshStandardMaterial({
       color: 0x465d3e,
-      roughness: 0.8
+      roughness: 0.82
+    }),
+    slabSide: new THREE.MeshStandardMaterial({
+      color: 0x465d3e,
+      roughness: 0.82
     }),
     soil: new THREE.MeshStandardMaterial({ color: 0x7a5038, roughness: 0.85 }),
     soilDark: new THREE.MeshStandardMaterial({ color: 0x5f3f2f, roughness: 0.9 }),
@@ -420,24 +424,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const platformGroup = new THREE.Group();
 
+    const bottomSlab = new THREE.Mesh(
+      new THREE.BoxGeometry(size, 0.28, size),
+      materials.slabSide
+    );
+
+    bottomSlab.position.y = -0.08;
+    bottomSlab.receiveShadow = true;
+    platformGroup.add(bottomSlab);
+
+    const outlineGeometry = new THREE.BoxGeometry(size, 0.36, size);
+    const outlineEdges = new THREE.EdgesGeometry(outlineGeometry);
+    const outline = new THREE.LineSegments(
+      outlineEdges,
+      new THREE.LineBasicMaterial({
+        color: 0xf0dfb8,
+        transparent: true,
+        opacity: 0.75
+      })
+    );
+    outline.position.y = -0.04;
+    platformGroup.add(outline);
+
+    const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
+    grid.position.y = 0.111;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.5;
+    platformGroup.add(grid);
+
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
         const tileGroup = new THREE.Group();
 
         tileGroup.position.x = col - size / 2 + 0.5;
         tileGroup.position.z = row - size / 2 + 0.5;
-        tileGroup.position.y = 0;
+        tileGroup.position.y = 0.1;
 
         const visibleTile = new THREE.Mesh(
-          new THREE.BoxGeometry(0.96, 0.35, 0.96),
-          [
-            materials.tileSide,
-            materials.tileSide,
-            materials.tileTop,
-            materials.tileSide,
-            materials.tileSide,
-            materials.tileSide
-          ]
+          new THREE.BoxGeometry(1.01, 0.08, 1.01),
+          materials.tileTop
         );
 
         visibleTile.position.y = 0;
@@ -445,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
         visibleTile.receiveShadow = true;
 
         const clickTile = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.96, 0.96),
+          new THREE.PlaneGeometry(1, 1),
           new THREE.MeshBasicMaterial({
             transparent: true,
             opacity: 0,
@@ -455,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         clickTile.rotation.x = -Math.PI / 2;
-        clickTile.position.y = 0.19;
+        clickTile.position.y = 0.055;
         clickTile.userData.isTile = true;
         clickTile.userData.tileId = `${row}-${col}`;
         clickTile.userData.tileGroup = tileGroup;
@@ -474,10 +499,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         outerGlow.rotation.x = -Math.PI / 2;
-        outerGlow.position.y = 0.205;
+        outerGlow.position.y = 0.07;
 
         const glow = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.9, 0.9),
+          new THREE.PlaneGeometry(0.94, 0.94),
           new THREE.MeshBasicMaterial({
             color: 0xfff1b8,
             transparent: true,
@@ -488,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         glow.rotation.x = -Math.PI / 2;
-        glow.position.y = 0.215;
+        glow.position.y = 0.08;
 
         const redGlow = new THREE.Mesh(
           new THREE.PlaneGeometry(1.08, 1.08),
@@ -502,10 +527,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         redGlow.rotation.x = -Math.PI / 2;
-        redGlow.position.y = 0.225;
+        redGlow.position.y = 0.09;
 
         const border = new THREE.LineSegments(
-          new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
+          new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
           new THREE.LineBasicMaterial({
             color: 0xfff1b8,
             transparent: true,
@@ -514,7 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         border.rotation.x = -Math.PI / 2;
-        border.position.y = 0.24;
+        border.position.y = 0.105;
 
         const raisedHighlight = new THREE.Mesh(
           new THREE.BoxGeometry(0.78, 0.045, 0.78),
@@ -526,7 +551,7 @@ document.addEventListener("DOMContentLoaded", () => {
           })
         );
 
-        raisedHighlight.position.y = 0.215;
+        raisedHighlight.position.y = 0.08;
 
         clickTile.userData.outerGlow = outerGlow;
         clickTile.userData.glow = glow;
