@@ -445,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tileGroup.position.y = 0;
 
         const visibleTile = new THREE.Mesh(
-          new THREE.BoxGeometry(0.96, 0.35, 0.96),
+       new THREE.BoxGeometry(1.01, 0.35, 1.01)
           [
             materials.tileSide,
             materials.tileSide,
@@ -461,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
         visibleTile.receiveShadow = true;
 
         const clickTile = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.96, 0.96),
+new THREE.PlaneGeometry(1, 1)
           new THREE.MeshBasicMaterial({
             transparent: true,
             opacity: 0,
@@ -507,7 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
         glow.position.y = 0.215;
 
         const redGlow = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.08, 1.08),
+new THREE.PlaneGeometry(1, 1)
           new THREE.MeshBasicMaterial({
             color: 0xff4b4b,
             transparent: true,
@@ -562,6 +562,12 @@ document.addEventListener("DOMContentLoaded", () => {
         platformGroup.add(tileGroup);
       }
     }
+
+const tanGrid = new THREE.GridHelper(size, size, 0xf0dfb8, 0xf0dfb8);
+tanGrid.position.y = 0.192;
+tanGrid.material.transparent = true;
+tanGrid.material.opacity = 0.8;
+platformGroup.add(tanGrid);
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
