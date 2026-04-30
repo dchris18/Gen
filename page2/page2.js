@@ -16,6 +16,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmRemove = document.querySelector(".confirm-remove");
   const backRemove = document.querySelector(".back-remove");
 
+  const saveButton = document.querySelector(".save-button");
+  const bookmarkButton = document.querySelector(".bookmark-button");
+
+  const nameSavePopup = document.querySelector(".name-save-popup");
+  const saveNameInput = document.querySelector(".save-name-input");
+  const confirmSave = document.querySelector(".confirm-save");
+  const cancelSave = document.querySelector(".cancel-save");
+
+  const savedListPopup = document.querySelector(".saved-list-popup");
+  const savedList = document.querySelector(".saved-list");
+  const closeSaves = document.querySelector(".close-saves");
+
   if (!container) return;
 
   let selectedPlant = null;
@@ -26,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let tileMeshes = [];
   let plantedItems = {};
   let tileWaitingForRemoval = null;
+  let removedTileIds = [];
 
   let savedRotation = { x: 0.55, y: -0.75 };
 
@@ -70,96 +83,21 @@ document.addEventListener("DOMContentLoaded", () => {
       color: 0x5f7852,
       roughness: 0.75
     }),
-
     tileSide: new THREE.MeshStandardMaterial({
       color: 0x465d3e,
       roughness: 0.8
     }),
-
-    soil: new THREE.MeshStandardMaterial({
-      color: 0x7a5038,
-      roughness: 0.85
-    }),
-
-    soilDark: new THREE.MeshStandardMaterial({
-      color: 0x5f3f2f,
-      roughness: 0.9
-    }),
-
-    stem: new THREE.MeshStandardMaterial({
-      color: 0x55784b,
-      roughness: 0.65
-    }),
-
-    stemLight: new THREE.MeshStandardMaterial({
-      color: 0x6f985d,
-      roughness: 0.65
-    }),
-
-    leaf: new THREE.MeshStandardMaterial({
-      color: 0x6f985d,
-      roughness: 0.6
-    }),
-
-    leafDark: new THREE.MeshStandardMaterial({
-      color: 0x4f7445,
-      roughness: 0.7
-    }),
-
-    leafLight: new THREE.MeshStandardMaterial({
-      color: 0x92b978,
-      roughness: 0.55
-    }),
-
-    flowerPetal: new THREE.MeshStandardMaterial({
-      color: 0xe8a3a8,
-      roughness: 0.55
-    }),
-
-    flowerPetalLight: new THREE.MeshStandardMaterial({
-      color: 0xf2c0bd,
-      roughness: 0.5
-    }),
-
-    flowerCenter: new THREE.MeshStandardMaterial({
-      color: 0xf0d77a,
-      roughness: 0.55
-    }),
-
-    potDark: new THREE.MeshStandardMaterial({
-      color: 0x9b6248,
-      roughness: 0.8
-    }),
-
-    carrot: new THREE.MeshStandardMaterial({
-      color: 0xe9853f,
-      roughness: 0.6
-    }),
-
-    carrotDark: new THREE.MeshStandardMaterial({
-      color: 0xb75f31,
-      roughness: 0.7
-    }),
-
-    potato: new THREE.MeshStandardMaterial({
-      color: 0xb98b5d,
-      roughness: 0.85
-    }),
-
-    potatoDark: new THREE.MeshStandardMaterial({
-      color: 0x7b5138,
-      roughness: 0.95
-    }),
-
-    tomato: new THREE.MeshStandardMaterial({
-      color: 0xd94f3d,
-      roughness: 0.55
-    }),
-
-    tomatoDark: new THREE.MeshStandardMaterial({
-      color: 0xa73931,
-      roughness: 0.65
-    })
+    soil: new THREE.MeshStandardMaterial({ color: 0x7a5038, roughness: 0.85 }),
+    soilDark: new THREE.MeshStandardMaterial({ color: 0x5f3f2f, roughness: 0.9 }),
+    stem: new THREE.MeshStandardMaterial({ color: 0x55784b, roughness: 0.65 }),
+    stemLight: new THREE.MeshStandardMaterial({ color: 0x6f985d, roughness: 0.65 }),
+    leaf: new THREE.MeshStandardMaterial({ color: 0x6f985d, roughness: 0.6 }),
+    leafDark: new THREE.MeshStandardMaterial({ color: 0x4f7445, roughness: 0.7 }),
+    leafLight: new THREE.MeshStandardMaterial({ color: 0x92b978, roughness: 0.55 }),
+    flowerPetal: new THREE.MeshStandardMaterial({ color: 0xe8a3a8, roughness: 0.55 }),
+    flowerPetalLight: new THREE.MeshStandardMaterial({ color: 0xf2c0bd, roughness: 0.5 }),
+    flowerCenter: new THREE.MeshStandardMaterial({ color: 0xf0d77a, roughness: 0.55 }),
+    potDark: new THREE.MeshStandardMaterial({ color: 0x9b6248, roughness: 0.8 })
   };
 
   if (eyeButton && gridMenu) {
@@ -208,15 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function roundedLeaf(width, height, depth, material) {
-    const leaf = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 20, 14),
-      material
-    );
-
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 14), material);
     leaf.scale.set(width, height, depth);
     leaf.castShadow = true;
     leaf.receiveShadow = true;
-
     return leaf;
   }
 
@@ -229,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
     stem.position.y = height / 2;
     stem.castShadow = true;
     stem.receiveShadow = true;
-
     return stem;
   }
 
@@ -255,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     topSoil.position.y = 0.19;
 
     group.add(saucer, soil, topSoil);
-
     return group;
   }
 
@@ -268,7 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function createSproutPlant() {
     const plant = new THREE.Group();
-
     plant.add(makeSoilBase());
 
     const stem = makeStem(0.58);
@@ -294,13 +224,11 @@ document.addEventListener("DOMContentLoaded", () => {
     plant.add(tinyLeaf);
 
     plant.scale.set(0.72, 0.72, 0.72);
-
     return plant;
   }
 
   function createFernPlant() {
     const plant = new THREE.Group();
-
     plant.add(makeSoilBase());
 
     for (let i = 0; i < 10; i++) {
@@ -333,13 +261,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     plant.scale.set(0.68, 0.68, 0.68);
-
     return plant;
   }
 
   function createFlowerPlant() {
     const plant = new THREE.Group();
-
     plant.add(makeSoilBase());
 
     const mainStem = makeStem(0.72);
@@ -390,219 +316,18 @@ document.addEventListener("DOMContentLoaded", () => {
     plant.add(flowerGroup);
 
     plant.scale.set(0.7, 0.7, 0.7);
-
-    return plant;
-  }
-
-  function createCarrotPlant() {
-    const plant = new THREE.Group();
-
-    plant.add(makeSoilBase());
-
-    const body = new THREE.Mesh(
-      new THREE.ConeGeometry(0.14, 0.55, 20),
-      materials.carrot
-    );
-    body.position.y = 0.42;
-    body.rotation.x = Math.PI;
-    body.castShadow = true;
-    plant.add(body);
-
-    const top = new THREE.Mesh(
-      new THREE.SphereGeometry(0.16, 18, 12),
-      materials.carrot
-    );
-    top.scale.set(1, 0.5, 1);
-    top.position.y = 0.68;
-    top.castShadow = true;
-    plant.add(top);
-
-    const ringOne = new THREE.Mesh(
-      new THREE.TorusGeometry(0.105, 0.008, 8, 24),
-      materials.carrotDark
-    );
-    ringOne.rotation.x = Math.PI / 2;
-    ringOne.position.y = 0.48;
-    plant.add(ringOne);
-
-    const ringTwo = new THREE.Mesh(
-      new THREE.TorusGeometry(0.075, 0.007, 8, 24),
-      materials.carrotDark
-    );
-    ringTwo.rotation.x = Math.PI / 2;
-    ringTwo.position.y = 0.34;
-    plant.add(ringTwo);
-
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2;
-
-      const leaf = roundedLeaf(
-        0.72,
-        0.12,
-        0.3,
-        i % 2 === 0 ? materials.leafLight : materials.leaf
-      );
-
-      leaf.position.set(
-        Math.cos(angle) * 0.14,
-        0.9 + (i % 2) * 0.04,
-        Math.sin(angle) * 0.14
-      );
-
-      leaf.rotation.z = angle;
-      leaf.rotation.x = Math.sin(angle) * 0.6;
-      leaf.rotation.y = Math.cos(angle) * 0.45;
-
-      plant.add(leaf);
-    }
-
-    plant.scale.set(0.72, 0.72, 0.72);
-
-    return plant;
-  }
-
-  function createPotatoPlant() {
-    const plant = new THREE.Group();
-
-    plant.add(makeSoilBase());
-
-    const body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.28, 22, 16),
-      materials.potato
-    );
-
-    body.scale.set(1.2, 0.7, 0.9);
-    body.position.y = 0.38;
-    body.rotation.z = -0.15;
-    body.castShadow = true;
-    plant.add(body);
-
-    const lump = new THREE.Mesh(
-      new THREE.SphereGeometry(0.14, 16, 12),
-      materials.potato
-    );
-
-    lump.position.set(0.18, 0.42, 0.04);
-    lump.scale.set(1, 0.6, 0.9);
-    lump.castShadow = true;
-    plant.add(lump);
-
-    for (let i = 0; i < 5; i++) {
-      const spot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.03, 8, 8),
-        materials.potatoDark
-      );
-
-      spot.position.set(
-        -0.15 + i * 0.08,
-        0.44 + Math.sin(i) * 0.03,
-        0.2
-      );
-
-      spot.scale.set(1, 0.4, 0.6);
-      plant.add(spot);
-    }
-
-    const stem = makeStem(0.4, 0.025, materials.stemLight);
-    stem.position.y = 0.55;
-    plant.add(stem);
-
-    const leafA = roundedLeaf(0.9, 0.15, 0.35, materials.leaf);
-    leafA.position.set(-0.18, 0.8, 0);
-    leafA.rotation.z = 0.7;
-    plant.add(leafA);
-
-    const leafB = roundedLeaf(0.9, 0.15, 0.35, materials.leafLight);
-    leafB.position.set(0.18, 0.85, 0);
-    leafB.rotation.z = -0.7;
-    plant.add(leafB);
-
-    plant.scale.set(0.72, 0.72, 0.72);
-
-    return plant;
-  }
-
-  function createTomatoPlant() {
-    const plant = new THREE.Group();
-
-    plant.add(makeSoilBase());
-
-    const stem = makeStem(0.7, 0.03, materials.stem);
-    stem.position.y = 0.18;
-    plant.add(stem);
-
-    const branchA = makeStem(0.4, 0.02, materials.stemLight);
-    branchA.position.set(-0.08, 0.48, 0);
-    branchA.rotation.z = 0.7;
-    plant.add(branchA);
-
-    const branchB = makeStem(0.4, 0.02, materials.stemLight);
-    branchB.position.set(0.08, 0.48, 0);
-    branchB.rotation.z = -0.7;
-    plant.add(branchB);
-
-    for (let i = 0; i < 3; i++) {
-      const tomato = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 20, 14),
-        i === 1 ? materials.tomatoDark : materials.tomato
-      );
-
-      tomato.position.set(-0.15 + i * 0.15, 0.7 + Math.sin(i) * 0.04, 0.08);
-      tomato.castShadow = true;
-      plant.add(tomato);
-
-      const cap = new THREE.Mesh(
-        new THREE.ConeGeometry(0.05, 0.06, 6),
-        materials.leafDark
-      );
-
-      cap.position.set(
-        tomato.position.x,
-        tomato.position.y + 0.1,
-        tomato.position.z
-      );
-      cap.rotation.x = Math.PI;
-      plant.add(cap);
-    }
-
-    const leafA = roundedLeaf(1, 0.15, 0.35, materials.leafLight);
-    leafA.position.set(-0.22, 0.6, 0);
-    leafA.rotation.z = 0.85;
-    plant.add(leafA);
-
-    const leafB = roundedLeaf(1, 0.15, 0.35, materials.leaf);
-    leafB.position.set(0.22, 0.63, 0);
-    leafB.rotation.z = -0.85;
-    plant.add(leafB);
-
-    const topLeaf = roundedLeaf(0.75, 0.12, 0.3, materials.leafDark);
-    topLeaf.position.set(0, 0.9, 0);
-    topLeaf.rotation.x = 0.35;
-    plant.add(topLeaf);
-
-    plant.scale.set(0.72, 0.72, 0.72);
-
     return plant;
   }
 
   function createPlant(type) {
     let plant;
 
-    if (type === "fern") {
-      plant = createFernPlant();
-    } else if (type === "flower") {
-      plant = createFlowerPlant();
-    } else if (type === "carrot") {
-      plant = createCarrotPlant();
-    } else if (type === "potato") {
-      plant = createPotatoPlant();
-    } else if (type === "tomato") {
-      plant = createTomatoPlant();
-    } else {
-      plant = createSproutPlant();
-    }
+    if (type === "fern") plant = createFernPlant();
+    else if (type === "flower") plant = createFlowerPlant();
+    else plant = createSproutPlant();
 
     plant.userData.isPlant = true;
+    plant.userData.plantType = type;
     plant.rotation.y = Math.random() * Math.PI * 2;
     plant.position.y = 0.24;
 
@@ -705,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tileMeshes = [];
     plantedItems = {};
     tileWaitingForRemoval = null;
+    removedTileIds = [];
 
     if (removePopup) removePopup.classList.remove("open");
 
@@ -862,6 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   gridButtons.forEach((button) => {
     button.addEventListener("click", () => {
+      removedTileIds = [];
       createPlatform(Number(button.dataset.grid));
       if (gridMenu) gridMenu.classList.remove("open");
     });
@@ -972,6 +699,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const tileId = tileWaitingForRemoval.userData.tileId;
 
+      if (!removedTileIds.includes(tileId)) {
+        removedTileIds.push(tileId);
+      }
+
       removePlantFromSquare(tileWaitingForRemoval);
 
       tileWaitingForRemoval.userData.removed = true;
@@ -985,6 +716,161 @@ document.addEventListener("DOMContentLoaded", () => {
       tileWaitingForRemoval = null;
 
       if (removePopup) removePopup.classList.remove("open");
+    });
+  }
+
+  function getSavedGardens() {
+    return JSON.parse(localStorage.getItem("gardenSavesPage2")) || [];
+  }
+
+  function setSavedGardens(saves) {
+    localStorage.setItem("gardenSavesPage2", JSON.stringify(saves));
+  }
+
+  function saveCurrentGarden(name) {
+    const plants = [];
+
+    Object.keys(plantedItems).forEach((tileId) => {
+      const plant = plantedItems[tileId];
+
+      if (plant) {
+        plants.push({
+          tileId: tileId,
+          type: plant.userData.plantType,
+          rotationY: plant.rotation.y
+        });
+      }
+    });
+
+    const saveData = {
+      id: Date.now(),
+      name: name,
+      gridSize: currentSize,
+      platformRotation: {
+        x: platform.rotation.x,
+        y: platform.rotation.y
+      },
+      cameraZ: camera.position.z,
+      removedTiles: [...removedTileIds],
+      plants: plants
+    };
+
+    const saves = getSavedGardens();
+    saves.push(saveData);
+    setSavedGardens(saves);
+  }
+
+  function loadGarden(saveData) {
+    createPlatform(saveData.gridSize);
+
+    platform.rotation.x = saveData.platformRotation.x;
+    platform.rotation.y = saveData.platformRotation.y;
+    camera.position.z = saveData.cameraZ;
+    camera.lookAt(0, 0, 0);
+
+    removedTileIds = [...saveData.removedTiles];
+
+    removedTileIds.forEach((tileId) => {
+      const tile = tileMeshes.find((item) => item.userData.tileId === tileId);
+
+      if (tile) {
+        tile.userData.removed = true;
+        tile.userData.tileGroup.visible = false;
+        tileMeshes = tileMeshes.filter((item) => item !== tile);
+      }
+    });
+
+    saveData.plants.forEach((plantData) => {
+      const tile = tileMeshes.find((item) => item.userData.tileId === plantData.tileId);
+
+      if (tile) {
+        selectedPlant = plantData.type;
+        plantOnSquare(tile);
+
+        if (plantedItems[plantData.tileId]) {
+          plantedItems[plantData.tileId].rotation.y = plantData.rotationY;
+        }
+      }
+    });
+
+    selectedPlant = null;
+    selectedSquare = null;
+  }
+
+  function renderSavedList() {
+    const saves = getSavedGardens();
+
+    if (!savedList) return;
+
+    savedList.innerHTML = "";
+
+    if (saves.length === 0) {
+      savedList.innerHTML = `<p style="color:#7a4144; margin:0;">No saves yet.</p>`;
+      return;
+    }
+
+    saves.forEach((saveData) => {
+      const button = document.createElement("button");
+      button.className = "saved-item";
+      button.textContent = saveData.name;
+
+      button.addEventListener("click", () => {
+        loadGarden(saveData);
+        if (savedListPopup) savedListPopup.classList.remove("open");
+      });
+
+      savedList.appendChild(button);
+    });
+  }
+
+  if (saveButton) {
+    saveButton.addEventListener("click", () => {
+      if (nameSavePopup && saveNameInput) {
+        saveNameInput.value = "";
+        nameSavePopup.classList.add("open");
+        saveNameInput.focus();
+      }
+    });
+  }
+
+  if (cancelSave) {
+    cancelSave.addEventListener("click", () => {
+      if (nameSavePopup) nameSavePopup.classList.remove("open");
+    });
+  }
+
+  if (confirmSave) {
+    confirmSave.addEventListener("click", () => {
+      if (!saveNameInput) return;
+
+      const name = saveNameInput.value.trim();
+
+      if (!name) return;
+
+      saveCurrentGarden(name);
+
+      if (nameSavePopup) nameSavePopup.classList.remove("open");
+
+      if (saveButton) {
+        saveButton.classList.add("saved");
+
+        setTimeout(() => {
+          saveButton.classList.remove("saved");
+        }, 350);
+      }
+    });
+  }
+
+  if (bookmarkButton) {
+    bookmarkButton.addEventListener("click", () => {
+      renderSavedList();
+      if (savedListPopup) savedListPopup.classList.add("open");
+    });
+  }
+
+  if (closeSaves) {
+    closeSaves.addEventListener("click", () => {
+      if (savedListPopup) savedListPopup.classList.remove("open");
     });
   }
 
