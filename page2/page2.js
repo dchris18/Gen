@@ -678,6 +678,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (removePopup) removePopup.classList.add("open");
   }
 
+  saveButton.classList.add("saved");
+
+setTimeout(() => {
+  saveButton.classList.remove("saved");
+}, 300);
+
   function showPlantRemoveFlash(tile) {
     clearTileHighlight(selectedSquare);
 
