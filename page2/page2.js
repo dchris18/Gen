@@ -418,7 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 180);
   }
 
-function createPlatform(size) {
+  function createPlatform(size) {
   if (platform) {
     savedRotation.x = platform.rotation.x;
     savedRotation.y = platform.rotation.y;
@@ -445,7 +445,7 @@ function createPlatform(size) {
       tileGroup.position.y = 0;
 
       const visibleTile = new THREE.Mesh(
-        new THREE.BoxGeometry(0.96, 0.35, 0.96),
+        new THREE.BoxGeometry(1, 0.35, 1),
         [
           materials.tileSide,
           materials.tileSide,
@@ -461,7 +461,7 @@ function createPlatform(size) {
       visibleTile.receiveShadow = true;
 
       const clickTile = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.96, 0.96),
+        new THREE.PlaneGeometry(1, 1),
         new THREE.MeshBasicMaterial({
           transparent: true,
           opacity: 0,
@@ -477,6 +477,44 @@ function createPlatform(size) {
       clickTile.userData.tileGroup = tileGroup;
       clickTile.userData.visibleTile = visibleTile;
       clickTile.userData.removed = false;
+
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0xf0dfb8,
+        transparent: true,
+        opacity: 0.65
+      });
+
+      const topLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-0.5, 0.215, -0.5),
+          new THREE.Vector3(0.5, 0.215, -0.5)
+        ]),
+        lineMaterial
+      );
+
+      const bottomLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-0.5, 0.215, 0.5),
+          new THREE.Vector3(0.5, 0.215, 0.5)
+        ]),
+        lineMaterial
+      );
+
+      const leftLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-0.5, 0.215, -0.5),
+          new THREE.Vector3(-0.5, 0.215, 0.5)
+        ]),
+        lineMaterial
+      );
+
+      const rightLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0.5, 0.215, -0.5),
+          new THREE.Vector3(0.5, 0.215, 0.5)
+        ]),
+        lineMaterial
+      );
 
       const outerGlow = new THREE.Mesh(
         new THREE.PlaneGeometry(1.08, 1.08),
@@ -521,7 +559,7 @@ function createPlatform(size) {
       redGlow.position.y = 0.225;
 
       const border = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
+        new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
         new THREE.LineBasicMaterial({
           color: 0xfff1b8,
           transparent: true,
@@ -552,6 +590,10 @@ function createPlatform(size) {
 
       tileGroup.add(visibleTile);
       tileGroup.add(clickTile);
+      tileGroup.add(topLine);
+      tileGroup.add(bottomLine);
+      tileGroup.add(leftLine);
+      tileGroup.add(rightLine);
       tileGroup.add(outerGlow);
       tileGroup.add(glow);
       tileGroup.add(redGlow);
@@ -562,31 +604,6 @@ function createPlatform(size) {
       platformGroup.add(tileGroup);
     }
   }
-
-const lineMaterial = new THREE.LineBasicMaterial({
-  color: 0xf0dfb8,
-  transparent: true,
-  opacity: 0.6
-});
-
-for (let i = 0; i <= size; i++) {
-  const pos = i - size / 2;
-
-  // vertical lines
-  const vGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(pos, 0.21, -size / 2),
-    new THREE.Vector3(pos, 0.21, size / 2)
-  ]);
-
-  // horizontal lines
-  const hGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-size / 2, 0.21, pos),
-    new THREE.Vector3(size / 2, 0.21, pos)
-  ]);
-
-  platformGroup.add(new THREE.Line(vGeo, lineMaterial));
-  platformGroup.add(new THREE.Line(hGeo, lineMaterial));
-}
 
   platformGroup.rotation.x = savedRotation.x;
   platformGroup.rotation.y = savedRotation.y;
