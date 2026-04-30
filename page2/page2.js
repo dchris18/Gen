@@ -12,10 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const plantCards = document.querySelectorAll(".plant-card");
   const container = document.querySelector("#three-platform");
 
-  if (!container) {
-    console.error("Missing #three-platform div in HTML");
-    return;
-  }
+  if (!container) return;
+
+  let selectedPlant = null;
 
   if (eyeButton && gridMenu) {
     eyeButton.addEventListener("click", () => {
@@ -40,6 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
     card.addEventListener("click", () => {
       plantCards.forEach((item) => item.classList.remove("selected"));
       card.classList.add("selected");
+      selectedPlant = card.dataset.plant;
+      plantMenu.classList.remove("open");
     });
   });
 
@@ -61,6 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
 
+  scene.add(new THREE.DirectionalLight(0xffffff, 1.8).position.set(3, 5, 4));
+  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
   const light = new THREE.DirectionalLight(0xffffff, 1.8);
   light.position.set(3, 5, 4);
   scene.add(light);
@@ -72,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSize = 6;
   let selectedSquare = null;
   let tileMeshes = [];
+  let plantedItems = {};
 
   let savedRotation = {
     x: 0.55,
@@ -81,54 +86,166 @@ document.addEventListener("DOMContentLoaded", () => {
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
+  function makeStem(height = 0.55) {
+    const stemGeometry = new THREE.CylinderGeometry(0.035, 0.045, height, 10);
+    const stemMaterial = new THREE.MeshStandardMaterial({ color: 0x527447 });
+    const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+    stem.position.y = height / 2;
+    return stem;
+  }
+
+  function makeLeaf(x, y, z, rotateZ) {
+    const leafGeometry = new THREE.SphereGeometry(0.17, 16, 12);
+    const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x6f985d });
+    const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
+
+    leaf.scale.set(1.4, 0.22, 0.65);
+    leaf.position.set(x, y, z);
+    leaf.rotation.z = rotateZ;
+    leaf.rotation.y = rotateZ * 0.4;
+
+    return leaf;
+  }
+
+  function createSproutPlant() {
+    const plant = new THREE.Group();
+
+    const soilGeometry = new THREE.CylinderGeometry(0.28, 0.32, 0.12, 24);
+    const soilMaterial = new THREE.MeshStandardMaterial({ color: 0x7b513b });
+    const soil = new THREE.Mesh(soilGeometry, soilMaterial);
+    soil.position.y = 0.06;
+    plant.add(soil);
+
+    const stem = makeStem(0.52);
+    stem.position.y = 0.12;
+    plant.add(stem);
+
+    plant.add(makeLeaf(-0.13, 0.48, 0, 0.65));
+    plant.add(makeLeaf(0.13, 0.55, 0, -0.65));
+
+    plant.scale.set(0.8, 0.8, 0.8);
+    return plant;
+  }
+
+  function createFernPlant() {
+    const plant = new THREE.Group();
+
+    const soilGeometry = new THREE.CylinderGeometry(0.3, 0.34, 0.12, 24);
+    const soilMaterial = new THREE.MeshStandardMaterial({ color: 0x7b513b });
+    const soil = new THREE.Mesh(soilGeometry, soilMaterial);
+    soil.position.y = 0.06;
+    plant.add(soil);
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+
+      const stem = makeStem(0.5);
+      stem.position.set(Math.cos(angle) * 0.08, 0.12, Math.sin(angle) * 0.08);
+      stem.rotation.z = Math.cos(angle) * 0.55;
+      stem.rotation.x = Math.sin(angle) * -0.55;
+      plant.add(stem);
+
+      const leaf = makeLeaf(
+        Math.cos(angle) * 0.28,
+        0.48,
+        Math.sin(angle) * 0.28,
+        angle
+      );
+
+      leaf.scale.set(1.6, 0.18, 0.48);
+      plant.add(leaf);
+    }
+
+    plant.scale.set(0.75, 0.75, 0.75);
+    return plant;
+  }
+
+  function createFlowerPlant() {
+    const plant = new THREE.Group();
+
+    const soilGeometry = new THREE.CylinderGeometry(0.28, 0.32, 0.12, 24);
+    const soilMaterial = new THREE.MeshStandardMaterial({ color: 0x7b513b });
+    const soil = new THREE.Mesh(soilGeometry, soilMaterial);
+    soil.position.y = 0.06;
+    plant.add(soil);
+
+    const stem = makeStem(0.7);
+    stem.position.y = 0.12;
+    plant.add(stem);
+
+    plant.add(makeLeaf(-0.13, 0.42, 0, 0.75));
+    plant.add(makeLeaf(0.13, 0.5, 0, -0.75));
+
+    const petalMaterial = new THREE.MeshStandardMaterial({ color: 0xe8a3a8 });
+    const centerMaterial = new THREE.MeshStandardMaterial({ color: 0xf0df8a });
+
+    for (let i = 0; i < 6; i++) {
+      const petal = new THREE.Mesh(
+        new THREE.SphereGeometry(0.12, 16, 12),
+        petalMaterial
+      );
+
+      const angle = (i / 6) * Math.PI * 2;
+      petal.position.set(Math.cos(angle) * 0.15, 0.78, Math.sin(angle) * 0.15);
+      petal.scale.set(1, 0.45, 0.7);
+      plant.add(petal);
+    }
+
+    const center = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 16, 12),
+      centerMaterial
+    );
+    center.position.y = 0.78;
+    plant.add(center);
+
+    plant.scale.set(0.8, 0.8, 0.8);
+    return plant;
+  }
+
+  function createPlant(type) {
+    if (type === "fern") return createFernPlant();
+    if (type === "flower") return createFlowerPlant();
+    return createSproutPlant();
+  }
+
+  function plantOnSquare(tile) {
+    if (!selectedPlant) return;
+
+    const tileId = tile.userData.tileId;
+
+    if (plantedItems[tileId]) {
+      tile.parent.remove(plantedItems[tileId]);
+    }
+
+    const plant = createPlant(selectedPlant);
+    plant.position.y = 0.08;
+
+    tile.parent.add(plant);
+    plantedItems[tileId] = plant;
+  }
+
   function createPlatform(size) {
     if (platform) {
       savedRotation.x = platform.rotation.x;
       savedRotation.y = platform.rotation.y;
-
       scene.remove(platform);
-
-      platform.traverse((child) => {
-        if (child.geometry) {
-          child.geometry.dispose();
-        }
-
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => mat.dispose());
-          } else {
-            child.material.dispose();
-          }
-        }
-      });
     }
 
     currentSize = size;
     selectedSquare = null;
     tileMeshes = [];
+    plantedItems = {};
 
     const platformGroup = new THREE.Group();
 
     const platformGeometry = new THREE.BoxGeometry(size, 0.35, size);
 
-    const platformMaterials = [
-      new THREE.MeshStandardMaterial({ color: 0x5f7852 }),
-      new THREE.MeshStandardMaterial({ color: 0x4f6744 }),
-      new THREE.MeshStandardMaterial({ color: 0x6f875e }),
-      new THREE.MeshStandardMaterial({ color: 0x3f5237 }),
-      new THREE.MeshStandardMaterial({ color: 0x5a704c }),
-      new THREE.MeshStandardMaterial({ color: 0x465d3e })
-    ];
-
-    const base = new THREE.Mesh(platformGeometry, platformMaterials);
-    platformGroup.add(base);
-
-    const edges = new THREE.EdgesGeometry(platformGeometry);
-    const outline = new THREE.LineSegments(
-      edges,
-      new THREE.LineBasicMaterial({ color: 0xf0dfb8 })
+    const base = new THREE.Mesh(
+      platformGeometry,
+      new THREE.MeshStandardMaterial({ color: 0x5f7852 })
     );
-    base.add(outline);
+
+    platformGroup.add(base);
 
     const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
     grid.position.y = 0.181;
@@ -136,104 +253,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
-        const tileSize = 1;
-
         const tileGroup = new THREE.Group();
 
         tileGroup.position.x = col - size / 2 + 0.5;
         tileGroup.position.z = row - size / 2 + 0.5;
         tileGroup.position.y = 0.205;
 
-        const clickGeometry = new THREE.PlaneGeometry(tileSize, tileSize);
-        const clickMaterial = new THREE.MeshBasicMaterial({
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
+        const clickTile = new THREE.Mesh(
+          new THREE.PlaneGeometry(1, 1),
+          new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
 
-        const clickTile = new THREE.Mesh(clickGeometry, clickMaterial);
         clickTile.rotation.x = -Math.PI / 2;
-        clickTile.userData.isTile = true;
+        clickTile.userData.tileId = `${row}-${col}`;
 
-        const outerGlowGeometry = new THREE.PlaneGeometry(
-          tileSize * 1.08,
-          tileSize * 1.08
+        const glow = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.92, 0.92),
+          new THREE.MeshBasicMaterial({
+            color: 0xfff1b8,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
         );
 
-        const outerGlowMaterial = new THREE.MeshBasicMaterial({
-          color: 0xffdf8a,
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-
-        const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
-        outerGlow.rotation.x = -Math.PI / 2;
-        outerGlow.position.y = 0.006;
-
-        const glowGeometry = new THREE.PlaneGeometry(
-          tileSize * 0.92,
-          tileSize * 0.92
-        );
-
-        const glowMaterial = new THREE.MeshBasicMaterial({
-          color: 0xfff1b8,
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-
-        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
         glow.rotation.x = -Math.PI / 2;
         glow.position.y = 0.012;
 
-        const borderGeometry = new THREE.EdgesGeometry(
-          new THREE.PlaneGeometry(tileSize * 0.96, tileSize * 0.96)
+        const border = new THREE.LineSegments(
+          new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
+          new THREE.LineBasicMaterial({
+            color: 0xfff1b8,
+            transparent: true,
+            opacity: 0
+          })
         );
 
-        const borderMaterial = new THREE.LineBasicMaterial({
-          color: 0xfff1b8,
-          transparent: true,
-          opacity: 0
-        });
-
-        const border = new THREE.LineSegments(borderGeometry, borderMaterial);
         border.rotation.x = -Math.PI / 2;
         border.position.y = 0.025;
 
-        const raisedHighlightGeometry = new THREE.BoxGeometry(
-          tileSize * 0.82,
-          0.04,
-          tileSize * 0.82
-        );
-
-        const raisedHighlightMaterial = new THREE.MeshBasicMaterial({
-          color: 0xfff4c7,
-          transparent: true,
-          opacity: 0,
-          depthWrite: false
-        });
-
-        const raisedHighlight = new THREE.Mesh(
-          raisedHighlightGeometry,
-          raisedHighlightMaterial
-        );
-
-        raisedHighlight.position.y = 0.025;
-
-        tileGroup.add(clickTile);
-        tileGroup.add(outerGlow);
-        tileGroup.add(glow);
-        tileGroup.add(border);
-        tileGroup.add(raisedHighlight);
-
-        clickTile.userData.outerGlow = outerGlow;
         clickTile.userData.glow = glow;
         clickTile.userData.border = border;
-        clickTile.userData.raisedHighlight = raisedHighlight;
+
+        tileGroup.add(clickTile);
+        tileGroup.add(glow);
+        tileGroup.add(border);
 
         tileMeshes.push(clickTile);
         platformGroup.add(tileGroup);
@@ -242,7 +312,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
-    platformGroup.rotation.z = 0;
     platformGroup.position.set(0, -0.2, 0);
 
     if (size === 3) {
@@ -251,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (size === 6) {
       platformGroup.scale.set(0.95, 1, 0.95);
       camera.position.set(5, 5, 7.8);
-    } else if (size === 9) {
+    } else {
       platformGroup.scale.set(0.75, 1, 0.75);
       camera.position.set(5, 5, 9.5);
     }
@@ -266,12 +335,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   gridButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      const size = Number(button.dataset.grid);
-      createPlatform(size);
-
-      if (gridMenu) {
-        gridMenu.classList.remove("open");
-      }
+      createPlatform(Number(button.dataset.grid));
+      gridMenu.classList.remove("open");
     });
   });
 
@@ -293,13 +358,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const moveX = e.clientX - previousX;
     const moveY = e.clientY - previousY;
 
-    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) {
-      didDrag = true;
-    }
+    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) didDrag = true;
 
     platform.rotation.y += moveX * 0.01;
     platform.rotation.x += moveY * 0.01;
-
     platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
 
     previousX = e.clientX;
@@ -324,18 +386,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (hits.length > 0) {
       if (selectedSquare) {
-        selectedSquare.userData.outerGlow.material.opacity = 0;
         selectedSquare.userData.glow.material.opacity = 0;
         selectedSquare.userData.border.material.opacity = 0;
-        selectedSquare.userData.raisedHighlight.material.opacity = 0;
       }
 
       selectedSquare = hits[0].object;
-
-      selectedSquare.userData.outerGlow.material.opacity = 0.25;
-      selectedSquare.userData.glow.material.opacity = 0.42;
+      selectedSquare.userData.glow.material.opacity = 0.38;
       selectedSquare.userData.border.material.opacity = 1;
-      selectedSquare.userData.raisedHighlight.material.opacity = 0.22;
+
+      plantOnSquare(selectedSquare);
     }
   });
 
@@ -348,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
       camera.position.z = Math.max(3, Math.min(10, camera.position.z));
     } else if (currentSize === 6) {
       camera.position.z = Math.max(4, Math.min(15, camera.position.z));
-    } else if (currentSize === 9) {
+    } else {
       camera.position.z = Math.max(5, Math.min(20, camera.position.z));
     }
 
