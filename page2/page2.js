@@ -110,13 +110,27 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let col = 0; col < size; col++) {
         const tileGeometry = new THREE.PlaneGeometry(tileSize, tileSize);
 
-        const tileMaterial = new THREE.MeshBasicMaterial({
-          color: 0xf0dfb8,
-          transparent: true,
-          opacity: 0
-        });
+const tileMaterial = new THREE.MeshBasicMaterial({
+  color: 0xfff1b8,
+  transparent: true,
+  opacity: 0,
+  side: THREE.DoubleSide,
+  depthWrite: false
+});
 
         const tile = new THREE.Mesh(tileGeometry, tileMaterial);
+const borderGeometry = new THREE.EdgesGeometry(tileGeometry);
+const borderMaterial = new THREE.LineBasicMaterial({
+  color: 0xfff1b8,
+  transparent: true,
+  opacity: 0
+});
+
+const border = new THREE.LineSegments(borderGeometry, borderMaterial);
+border.rotation.x = -Math.PI / 2;
+border.position.y = 0.205;
+
+tile.userData.border = border;
 
         tile.rotation.x = -Math.PI / 2;
         tile.position.y = 0.19;
@@ -128,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tileMeshes.push(tile);
         platformGroup.add(tile);
+        platformGroup.add(border);
       }
     }
 
@@ -199,27 +214,35 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   container.addEventListener("click", (e) => {
-    if (didDrag) return;
+  if (didDrag) return;
 
-    const rect = renderer.domElement.getBoundingClientRect();
+  const rect = renderer.domElement.getBoundingClientRect();
 
-    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-    raycaster.setFromCamera(mouse, camera);
+  raycaster.setFromCamera(mouse, camera);
 
-    const hits = raycaster.intersectObjects(tileMeshes);
+  const hits = raycaster.intersectObjects(tileMeshes);
 
-    if (hits.length > 0) {
-      if (selectedSquare) {
-        selectedSquare.material.opacity = 0;
+  if (hits.length > 0) {
+    if (selectedSquare) {
+      selectedSquare.material.opacity = 0;
+
+      if (selectedSquare.userData.border) {
+        selectedSquare.userData.border.material.opacity = 0;
       }
-
-      selectedSquare = hits[0].object;
-      selectedSquare.material.opacity = 0.65;
-      selectedSquare.material.color.set(0xf0dfb8);
     }
-  });
+
+    selectedSquare = hits[0].object;
+
+    selectedSquare.material.opacity = 0.28;
+
+    if (selectedSquare.userData.border) {
+      selectedSquare.userData.border.material.opacity = 1;
+    }
+  }
+});
 
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
