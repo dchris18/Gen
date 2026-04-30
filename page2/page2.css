@@ -184,6 +184,54 @@ button {
   transition: transform 0.18s ease;
 }
 
+.remove-popup {
+  position: absolute;
+  left: 38px;
+  bottom: 210px;
+  width: 244px;
+  padding: 16px;
+  border-radius: 22px;
+  background: #f0dfb8;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+  z-index: 30;
+  display: none;
+  text-align: center;
+}
+
+.remove-popup.open {
+  display: block;
+}
+
+.remove-popup h2 {
+  margin: 0 0 14px;
+  color: #9b3d3d;
+  font-size: 22px;
+}
+
+.remove-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.remove-actions button {
+  flex: 1;
+  border: none;
+  border-radius: 13px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.back-remove {
+  background: #de9572;
+  color: #7a4144;
+}
+
+.confirm-remove {
+  background: #9b3d3d;
+  color: #f0dfb8;
+}
+
 .tool-btn.selected {
   transform: translateY(-10px) scale(1.08);
 }

@@ -8,10 +8,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const gridButtons = document.querySelectorAll("[data-grid]");
   const toolButtons = document.querySelectorAll(".tool-btn");
   const potButton = document.querySelector(".tool-pot");
-  const removeButton = document.querySelector(".tool-shears");
   const plantMenu = document.querySelector(".plant-menu");
   const plantCards = document.querySelectorAll(".plant-card");
   const container = document.querySelector("#three-platform");
+
+  const removePopup = document.querySelector(".remove-popup");
+  const confirmRemove = document.querySelector(".confirm-remove");
+  const backRemove = document.querySelector(".back-remove");
 
   if (!container) {
     console.error("Missing #three-platform div in HTML");
@@ -20,53 +23,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let selectedPlant = null;
   let selectedTool = null;
+  let platform;
+  let currentSize = 6;
+  let selectedSquare = null;
+  let tileMeshes = [];
+  let plantedItems = {};
+  let tileWaitingForRemoval = null;
 
-  if (eyeButton && gridMenu) {
-    eyeButton.addEventListener("click", () => {
-      gridMenu.classList.toggle("open");
-    });
-  }
-
-  toolButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      toolButtons.forEach((item) => item.classList.remove("selected"));
-      button.classList.add("selected");
-
-      if (button.classList.contains("tool-pot")) {
-        selectedTool = "plant";
-      } else if (button.classList.contains("tool-shears")) {
-        selectedTool = "remove";
-        if (plantMenu) plantMenu.classList.remove("open");
-      } else {
-        selectedTool = "trowel";
-        if (plantMenu) plantMenu.classList.remove("open");
-      }
-    });
-  });
-
-  if (potButton && plantMenu) {
-    potButton.addEventListener("click", () => {
-      plantMenu.classList.toggle("open");
-    });
-  }
-
-  plantCards.forEach((card) => {
-    card.addEventListener("click", () => {
-      plantCards.forEach((item) => item.classList.remove("selected"));
-      card.classList.add("selected");
-
-      selectedPlant = card.dataset.plant;
-      selectedTool = "plant";
-
-      if (plantMenu) {
-        plantMenu.classList.remove("open");
-      }
-
-      if (selectedSquare) {
-        plantOnSquare(selectedSquare);
-      }
-    });
-  });
+  let savedRotation = {
+    x: 0.55,
+    y: -0.75
+  };
 
   const scene = new THREE.Scene();
 
@@ -100,18 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const ambient = new THREE.AmbientLight(0xffffff, 1.15);
   scene.add(ambient);
 
-  let platform;
-  let currentSize = 6;
-  let selectedSquare = null;
-  let tileMeshes = [];
-  let plantedItems = {};
-
-  let savedRotation = {
-    x: 0.55,
-    y: -0.75
-  };
-
   const raycaster = new THREE.Raycaster();
+  const plantRaycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
   const materials = {
@@ -164,6 +121,53 @@ document.addEventListener("DOMContentLoaded", () => {
       roughness: 0.8
     })
   };
+
+  if (eyeButton && gridMenu) {
+    eyeButton.addEventListener("click", () => {
+      gridMenu.classList.toggle("open");
+    });
+  }
+
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      toolButtons.forEach((item) => item.classList.remove("selected"));
+      button.classList.add("selected");
+
+      if (button.classList.contains("tool-pot")) {
+        selectedTool = "plant";
+      } else if (button.classList.contains("tool-shears")) {
+        selectedTool = "remove";
+        if (plantMenu) plantMenu.classList.remove("open");
+      } else {
+        selectedTool = "trowel";
+        if (plantMenu) plantMenu.classList.remove("open");
+      }
+    });
+  });
+
+  if (potButton && plantMenu) {
+    potButton.addEventListener("click", () => {
+      plantMenu.classList.toggle("open");
+    });
+  }
+
+  plantCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      plantCards.forEach((item) => item.classList.remove("selected"));
+      card.classList.add("selected");
+
+      selectedPlant = card.dataset.plant;
+      selectedTool = "plant";
+
+      if (plantMenu) {
+        plantMenu.classList.remove("open");
+      }
+
+      if (selectedSquare) {
+        plantOnSquare(selectedSquare);
+      }
+    });
+  });
 
   function roundedLeaf(width, height, depth, material) {
     const leaf = new THREE.Mesh(
@@ -223,6 +227,13 @@ document.addEventListener("DOMContentLoaded", () => {
     group.add(topSoil);
 
     return group;
+  }
+
+  function markPlantPieces(group, tileId) {
+    group.traverse((child) => {
+      child.userData.isPlantPiece = true;
+      child.userData.tileId = tileId;
+    });
   }
 
   function createSproutPlant() {
@@ -354,7 +365,11 @@ document.addEventListener("DOMContentLoaded", () => {
         i % 2 === 0 ? materials.flowerPetal : materials.flowerPetalLight
       );
 
-      petal.position.set(Math.cos(angle) * 0.14, Math.sin(angle) * 0.02, Math.sin(angle) * 0.14);
+      petal.position.set(
+        Math.cos(angle) * 0.14,
+        Math.sin(angle) * 0.02,
+        Math.sin(angle) * 0.14
+      );
       petal.scale.set(1.05, 0.42, 0.75);
       petal.rotation.y = angle;
       petal.castShadow = true;
@@ -402,6 +417,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function removePlantByTileId(tileId) {
+    const tile = tileMeshes.find((item) => item.userData.tileId === tileId);
+
+    if (tile && plantedItems[tileId]) {
+      tile.parent.remove(plantedItems[tileId]);
+      plantedItems[tileId] = null;
+    }
+  }
+
   function plantOnSquare(tile) {
     if (!selectedPlant) return;
 
@@ -410,18 +434,25 @@ document.addEventListener("DOMContentLoaded", () => {
     removePlantFromSquare(tile);
 
     const plant = createPlant(selectedPlant);
-    tile.parent.add(plant);
+    markPlantPieces(plant, tileId);
 
+    tile.parent.add(plant);
     plantedItems[tileId] = plant;
   }
 
+  function clearTileHighlight(tile) {
+    if (!tile) return;
+
+    tile.userData.outerGlow.material.opacity = 0;
+    tile.userData.glow.material.opacity = 0;
+    tile.userData.border.material.opacity = 0;
+    tile.userData.raisedHighlight.material.opacity = 0;
+    tile.userData.redGlow.material.opacity = 0;
+    tile.userData.border.material.color.set(0xfff1b8);
+  }
+
   function setSelectedSquare(tile) {
-    if (selectedSquare) {
-      selectedSquare.userData.outerGlow.material.opacity = 0;
-      selectedSquare.userData.glow.material.opacity = 0;
-      selectedSquare.userData.border.material.opacity = 0;
-      selectedSquare.userData.raisedHighlight.material.opacity = 0;
-    }
+    clearTileHighlight(selectedSquare);
 
     selectedSquare = tile;
 
@@ -429,6 +460,22 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedSquare.userData.glow.material.opacity = 0.42;
     selectedSquare.userData.border.material.opacity = 1;
     selectedSquare.userData.raisedHighlight.material.opacity = 0.22;
+    selectedSquare.userData.border.material.color.set(0xfff1b8);
+  }
+
+  function setRemoveSquare(tile) {
+    clearTileHighlight(selectedSquare);
+
+    selectedSquare = tile;
+    tileWaitingForRemoval = tile;
+
+    selectedSquare.userData.redGlow.material.opacity = 0.58;
+    selectedSquare.userData.border.material.opacity = 1;
+    selectedSquare.userData.border.material.color.set(0xff4b4b);
+
+    if (removePopup) {
+      removePopup.classList.add("open");
+    }
   }
 
   function createPlatform(size) {
@@ -449,6 +496,11 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedSquare = null;
     tileMeshes = [];
     plantedItems = {};
+    tileWaitingForRemoval = null;
+
+    if (removePopup) {
+      removePopup.classList.remove("open");
+    }
 
     const platformGroup = new THREE.Group();
 
@@ -499,6 +551,8 @@ document.addEventListener("DOMContentLoaded", () => {
         clickTile.rotation.x = -Math.PI / 2;
         clickTile.userData.isTile = true;
         clickTile.userData.tileId = `${row}-${col}`;
+        clickTile.userData.tileGroup = tileGroup;
+        clickTile.userData.removed = false;
 
         const outerGlow = new THREE.Mesh(
           new THREE.PlaneGeometry(1.08, 1.08),
@@ -528,6 +582,20 @@ document.addEventListener("DOMContentLoaded", () => {
         glow.rotation.x = -Math.PI / 2;
         glow.position.y = 0.012;
 
+        const redGlow = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.08, 1.08),
+          new THREE.MeshBasicMaterial({
+            color: 0xff4b4b,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
+
+        redGlow.rotation.x = -Math.PI / 2;
+        redGlow.position.y = 0.03;
+
         const border = new THREE.LineSegments(
           new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
           new THREE.LineBasicMaterial({
@@ -538,7 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         border.rotation.x = -Math.PI / 2;
-        border.position.y = 0.025;
+        border.position.y = 0.035;
 
         const raisedHighlight = new THREE.Mesh(
           new THREE.BoxGeometry(0.82, 0.04, 0.82),
@@ -554,12 +622,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         clickTile.userData.outerGlow = outerGlow;
         clickTile.userData.glow = glow;
+        clickTile.userData.redGlow = redGlow;
         clickTile.userData.border = border;
         clickTile.userData.raisedHighlight = raisedHighlight;
 
         tileGroup.add(clickTile);
         tileGroup.add(outerGlow);
         tileGroup.add(glow);
+        tileGroup.add(redGlow);
         tileGroup.add(border);
         tileGroup.add(raisedHighlight);
 
@@ -638,13 +708,32 @@ document.addEventListener("DOMContentLoaded", () => {
     dragging = false;
   });
 
-  container.addEventListener("click", (e) => {
-    if (didDrag) return;
-
+  function updateMouseFromEvent(e) {
     const rect = renderer.domElement.getBoundingClientRect();
 
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  }
+
+  container.addEventListener("click", (e) => {
+    if (didDrag) return;
+
+    updateMouseFromEvent(e);
+
+    if (selectedTool === "remove") {
+      plantRaycaster.setFromCamera(mouse, camera);
+
+      const plantHits = plantRaycaster.intersectObjects(
+        Object.values(plantedItems).filter(Boolean),
+        true
+      );
+
+      if (plantHits.length > 0) {
+        const tileId = plantHits[0].object.userData.tileId;
+        removePlantByTileId(tileId);
+        return;
+      }
+    }
 
     raycaster.setFromCamera(mouse, camera);
 
@@ -653,18 +742,64 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hits.length > 0) {
       const clickedTile = hits[0].object;
 
-      setSelectedSquare(clickedTile);
+      if (clickedTile.userData.removed) return;
 
       if (selectedTool === "remove") {
-        removePlantFromSquare(clickedTile);
+        const tileId = clickedTile.userData.tileId;
+
+        if (plantedItems[tileId]) {
+          removePlantFromSquare(clickedTile);
+          return;
+        }
+
+        setRemoveSquare(clickedTile);
         return;
       }
+
+      setSelectedSquare(clickedTile);
 
       if (selectedTool === "plant" && selectedPlant) {
         plantOnSquare(clickedTile);
       }
     }
   });
+
+  if (backRemove) {
+    backRemove.addEventListener("click", () => {
+      if (tileWaitingForRemoval) {
+        clearTileHighlight(tileWaitingForRemoval);
+      }
+
+      tileWaitingForRemoval = null;
+
+      if (removePopup) {
+        removePopup.classList.remove("open");
+      }
+    });
+  }
+
+  if (confirmRemove) {
+    confirmRemove.addEventListener("click", () => {
+      if (!tileWaitingForRemoval) return;
+
+      const tileId = tileWaitingForRemoval.userData.tileId;
+
+      removePlantFromSquare(tileWaitingForRemoval);
+
+      tileWaitingForRemoval.userData.removed = true;
+      tileWaitingForRemoval.parent.visible = false;
+
+      tileMeshes = tileMeshes.filter((tile) => tile !== tileWaitingForRemoval);
+      plantedItems[tileId] = null;
+
+      selectedSquare = null;
+      tileWaitingForRemoval = null;
+
+      if (removePopup) {
+        removePopup.classList.remove("open");
+      }
+    });
+  }
 
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
@@ -684,17 +819,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function animate() {
     requestAnimationFrame(animate);
-
-    Object.values(plantedItems).forEach((plant) => {
-      if (plant) {
-        plant.children.forEach((piece) => {
-          if (piece.userData.floaty) {
-            piece.rotation.y += 0.006;
-          }
-        });
-      }
-    });
-
     renderer.render(scene, camera);
   }
 
