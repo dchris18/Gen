@@ -7,6 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const gridMenu = document.querySelector(".grid-menu");
   const gridButtons = document.querySelectorAll("[data-grid]");
   const toolButtons = document.querySelectorAll(".tool-btn");
+  const potButton = document.querySelector(".tool-pot");
+  const plantMenu = document.querySelector(".plant-menu");
+  const plantCards = document.querySelectorAll(".plant-card");
   const container = document.querySelector("#three-platform");
 
   if (!container) {
@@ -24,6 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       toolButtons.forEach((item) => item.classList.remove("selected"));
       button.classList.add("selected");
+    });
+  });
+
+  if (potButton && plantMenu) {
+    potButton.addEventListener("click", () => {
+      plantMenu.classList.toggle("open");
+    });
+  }
+
+  plantCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      plantCards.forEach((item) => item.classList.remove("selected"));
+      card.classList.add("selected");
     });
   });
 
