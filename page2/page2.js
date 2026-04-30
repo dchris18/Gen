@@ -563,11 +563,28 @@ new THREE.PlaneGeometry(1, 1)
       }
     }
 
-const tanGrid = new THREE.GridHelper(size, size, 0xf0dfb8, 0xf0dfb8);
-tanGrid.position.y = 0.205;
-tanGrid.material.transparent = true;
-tanGrid.material.opacity = 0.75;
-platformGroup.add(tanGrid);
+    const lineMaterial = new THREE.LineBasicMaterial({
+  color: 0xf0dfb8,
+  transparent: true,
+  opacity: 0.65
+});
+
+for (let i = 0; i <= size; i++) {
+  const pos = i - size / 2;
+
+  const verticalGeometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(pos, 0.235, -size / 2),
+    new THREE.Vector3(pos, 0.235, size / 2)
+  ]);
+
+  const horizontalGeometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-size / 2, 0.236, pos),
+    new THREE.Vector3(size / 2, 0.236, pos)
+  ]);
+
+  platformGroup.add(new THREE.Line(verticalGeometry, lineMaterial));
+  platformGroup.add(new THREE.Line(horizontalGeometry, lineMaterial));
+}
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
