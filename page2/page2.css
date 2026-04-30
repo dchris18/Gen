@@ -60,49 +60,6 @@ button {
   display: block;
 }
 
-.save-button {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 14px;
-  background: #f0dfb8;
-  cursor: pointer;
-  z-index: 12;
-
-  display: grid;
-  place-items: center;
-
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.18);
-  transition: transform 0.18s ease, background 0.18s ease;
-}
-
-.save-button img {
-  width: 24px;
-  height: 24px;
-  pointer-events: none;
-  filter: brightness(0) saturate(100%) invert(36%) sepia(21%) saturate(600%) hue-rotate(310deg);
-}
-
-/* hover feel */
-.save-button:hover {
-  transform: scale(1.08);
-  background: #e8b292;
-}
-
-/* click feedback */
-.save-button:active {
-  transform: scale(0.95);
-}
-
-/* saved state */
-.save-button.saved {
-  background: #e8b292;
-  transform: scale(1.1);
-}
-
 .eye-button {
   position: absolute;
   left: 12px;
