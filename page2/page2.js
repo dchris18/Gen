@@ -9,16 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const toolButtons = document.querySelectorAll(".tool-btn");
   const container = document.querySelector("#three-platform");
 
-  if (!container) {
-    console.error("Missing #three-platform div in HTML");
-    return;
-  }
+  if (!container) return;
 
-  if (eyeButton && gridMenu) {
-    eyeButton.addEventListener("click", () => {
-      gridMenu.classList.toggle("open");
-    });
-  }
+  eyeButton.addEventListener("click", () => {
+    gridMenu.classList.toggle("open");
+  });
 
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -54,11 +49,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let platform;
   let currentSize = 6;
+  let selectedSquare = null;
+  let tileMeshes = [];
 
   let savedRotation = {
     x: 0.55,
     y: -0.75
   };
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
 
   function createPlatform(size) {
     if (platform) {
@@ -68,9 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       scene.remove(platform);
 
       platform.traverse((child) => {
-        if (child.geometry) {
-          child.geometry.dispose();
-        }
+        if (child.geometry) child.geometry.dispose();
 
         if (child.material) {
           if (Array.isArray(child.material)) {
@@ -83,6 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     currentSize = size;
+    selectedSquare = null;
+    tileMeshes = [];
 
     const platformGroup = new THREE.Group();
 
@@ -100,16 +100,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const base = new THREE.Mesh(platformGeometry, platformMaterials);
     platformGroup.add(base);
 
-    const edges = new THREE.EdgesGeometry(platformGeometry);
-    const outline = new THREE.LineSegments(
-      edges,
-      new THREE.LineBasicMaterial({ color: 0xf0dfb8 })
-    );
-    base.add(outline);
-
     const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
     grid.position.y = 0.181;
     platformGroup.add(grid);
+
+    const tileSize = size / size;
+
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const tileGeometry = new THREE.PlaneGeometry(tileSize, tileSize);
+
+        const tileMaterial = new THREE.MeshBasicMaterial({
+          color: 0xf0dfb8,
+          transparent: true,
+          opacity: 0
+        });
+
+        const tile = new THREE.Mesh(tileGeometry, tileMaterial);
+
+        tile.rotation.x = -Math.PI / 2;
+        tile.position.y = 0.19;
+
+        tile.position.x = col - size / 2 + 0.5;
+        tile.position.z = row - size / 2 + 0.5;
+
+        tile.userData.isTile = true;
+
+        tileMeshes.push(tile);
+        platformGroup.add(tile);
+      }
+    }
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
@@ -139,19 +159,18 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       const size = Number(button.dataset.grid);
       createPlatform(size);
-
-      if (gridMenu) {
-        gridMenu.classList.remove("open");
-      }
+      gridMenu.classList.remove("open");
     });
   });
 
   let dragging = false;
+  let didDrag = false;
   let previousX = 0;
   let previousY = 0;
 
   container.addEventListener("mousedown", (e) => {
     dragging = true;
+    didDrag = false;
     previousX = e.clientX;
     previousY = e.clientY;
   });
@@ -161,6 +180,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const moveX = e.clientX - previousX;
     const moveY = e.clientY - previousY;
+
+    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) {
+      didDrag = true;
+    }
 
     platform.rotation.y += moveX * 0.01;
     platform.rotation.x += moveY * 0.01;
@@ -173,6 +196,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("mouseup", () => {
     dragging = false;
+  });
+
+  container.addEventListener("click", (e) => {
+    if (didDrag) return;
+
+    const rect = renderer.domElement.getBoundingClientRect();
+
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const hits = raycaster.intersectObjects(tileMeshes);
+
+    if (hits.length > 0) {
+      if (selectedSquare) {
+        selectedSquare.material.opacity = 0;
+      }
+
+      selectedSquare = hits[0].object;
+      selectedSquare.material.opacity = 0.65;
+      selectedSquare.material.color.set(0xf0dfb8);
+    }
   });
 
   container.addEventListener("wheel", (e) => {
