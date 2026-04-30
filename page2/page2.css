@@ -30,6 +30,34 @@ button {
   background: #7f8d7b;
 }
 
+.bookmark-button,
+.save-button {
+  position: absolute;
+  left: 15px;
+  width: 60px;
+  height: 60px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 15;
+}
+
+.bookmark-button {
+  top: 15px;
+}
+
+.save-button {
+  top: 85px; /* sits right below bookmark */
+}
+
+.bookmark-button img,
+.save-button img {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+}
+
 .planner-board {
   position: absolute;
   top: 24px;
