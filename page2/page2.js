@@ -40,6 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let tileWaitingForRemoval = null;
   let removedTileIds = [];
 
+  let removeDragActive = false;
+  let removeSelectedTiles = [];
+
   let savedRotation = { x: 0.55, y: -0.75 };
 
   const scene = new THREE.Scene();
@@ -110,6 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       toolButtons.forEach((item) => item.classList.remove("selected"));
       button.classList.add("selected");
+
+      clearRemoveSelection();
+
+      if (removePopup) removePopup.classList.remove("open");
 
       if (button.classList.contains("tool-pot")) {
         selectedTool = "plant";
@@ -389,18 +396,43 @@ document.addEventListener("DOMContentLoaded", () => {
     tile.userData.border.material.color.set(0xfff1b8);
   }
 
-  function setRemoveSquare(tile) {
-    clearTileHighlight(selectedSquare);
+  function addTileToRemoveSelection(tile) {
+    if (!tile || tile.userData.removed) return;
 
-    selectedSquare = tile;
-    tileWaitingForRemoval = tile;
+    if (!removeSelectedTiles.includes(tile)) {
+      removeSelectedTiles.push(tile);
 
-    tile.userData.redGlow.material.opacity = 0.62;
-    tile.userData.border.material.opacity = 1;
-    tile.userData.raisedHighlight.material.opacity = 0.16;
-    tile.userData.border.material.color.set(0xff4b4b);
+      tile.userData.redGlow.material.opacity = 0.62;
+      tile.userData.border.material.opacity = 1;
+      tile.userData.raisedHighlight.material.opacity = 0.16;
+      tile.userData.border.material.color.set(0xff4b4b);
+    }
+  }
 
-    if (removePopup) removePopup.classList.add("open");
+  function clearRemoveSelection() {
+    removeSelectedTiles.forEach((tile) => {
+      clearTileHighlight(tile);
+    });
+
+    removeSelectedTiles = [];
+    tileWaitingForRemoval = null;
+  }
+
+  function openRemoveTilesPopup() {
+    if (removeSelectedTiles.length === 0) return;
+
+    tileWaitingForRemoval = removeSelectedTiles[0];
+
+    if (removePopup) {
+      const title = removePopup.querySelector("h2");
+
+      if (title) {
+        title.textContent =
+          removeSelectedTiles.length === 1 ? "Remove Tile" : "Remove Tiles";
+      }
+
+      removePopup.classList.add("open");
+    }
   }
 
   function showPlantRemoveFlash(tile) {
@@ -418,213 +450,236 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 180);
   }
 
-  function createPlatform(size) {
-  if (platform) {
-    savedRotation.x = platform.rotation.x;
-    savedRotation.y = platform.rotation.y;
-    scene.remove(platform);
+  function updateMouseFromEvent(e) {
+    const rect = renderer.domElement.getBoundingClientRect();
+
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   }
 
-  currentSize = size;
-  selectedSquare = null;
-  tileMeshes = [];
-  plantedItems = {};
-  tileWaitingForRemoval = null;
-  removedTileIds = [];
+  function getTileFromMouseEvent(e) {
+    updateMouseFromEvent(e);
+    raycaster.setFromCamera(mouse, camera);
 
-  if (removePopup) removePopup.classList.remove("open");
+    const hits = raycaster.intersectObjects(tileMeshes);
 
-  const platformGroup = new THREE.Group();
-
-  for (let row = 0; row < size; row++) {
-    for (let col = 0; col < size; col++) {
-      const tileGroup = new THREE.Group();
-
-      tileGroup.position.x = col - size / 2 + 0.5;
-      tileGroup.position.z = row - size / 2 + 0.5;
-      tileGroup.position.y = 0;
-
-      const visibleTile = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 0.35, 1),
-        [
-          materials.tileSide,
-          materials.tileSide,
-          materials.tileTop,
-          materials.tileSide,
-          materials.tileSide,
-          materials.tileSide
-        ]
-      );
-
-      visibleTile.position.y = 0;
-      visibleTile.castShadow = true;
-      visibleTile.receiveShadow = true;
-
-      const clickTile = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, 1),
-        new THREE.MeshBasicMaterial({
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        })
-      );
-
-      clickTile.rotation.x = -Math.PI / 2;
-      clickTile.position.y = 0.19;
-      clickTile.userData.isTile = true;
-      clickTile.userData.tileId = `${row}-${col}`;
-      clickTile.userData.tileGroup = tileGroup;
-      clickTile.userData.visibleTile = visibleTile;
-      clickTile.userData.removed = false;
-
-      const lineMaterial = new THREE.LineBasicMaterial({
-        color: 0xf0dfb8,
-        transparent: true,
-        opacity: 0.65
-      });
-
-      const topLine = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-0.5, 0.215, -0.5),
-          new THREE.Vector3(0.5, 0.215, -0.5)
-        ]),
-        lineMaterial
-      );
-
-      const bottomLine = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-0.5, 0.215, 0.5),
-          new THREE.Vector3(0.5, 0.215, 0.5)
-        ]),
-        lineMaterial
-      );
-
-      const leftLine = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-0.5, 0.215, -0.5),
-          new THREE.Vector3(-0.5, 0.215, 0.5)
-        ]),
-        lineMaterial
-      );
-
-      const rightLine = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0.5, 0.215, -0.5),
-          new THREE.Vector3(0.5, 0.215, 0.5)
-        ]),
-        lineMaterial
-      );
-
-      const outerGlow = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.08, 1.08),
-        new THREE.MeshBasicMaterial({
-          color: 0xffdf8a,
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        })
-      );
-
-      outerGlow.rotation.x = -Math.PI / 2;
-      outerGlow.position.y = 0.205;
-
-      const glow = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.9, 0.9),
-        new THREE.MeshBasicMaterial({
-          color: 0xfff1b8,
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        })
-      );
-
-      glow.rotation.x = -Math.PI / 2;
-      glow.position.y = 0.215;
-
-      const redGlow = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.08, 1.08),
-        new THREE.MeshBasicMaterial({
-          color: 0xff4b4b,
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        })
-      );
-
-      redGlow.rotation.x = -Math.PI / 2;
-      redGlow.position.y = 0.225;
-
-      const border = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
-        new THREE.LineBasicMaterial({
-          color: 0xfff1b8,
-          transparent: true,
-          opacity: 0
-        })
-      );
-
-      border.rotation.x = -Math.PI / 2;
-      border.position.y = 0.24;
-
-      const raisedHighlight = new THREE.Mesh(
-        new THREE.BoxGeometry(0.78, 0.045, 0.78),
-        new THREE.MeshBasicMaterial({
-          color: 0xfff4c7,
-          transparent: true,
-          opacity: 0,
-          depthWrite: false
-        })
-      );
-
-      raisedHighlight.position.y = 0.215;
-
-      clickTile.userData.outerGlow = outerGlow;
-      clickTile.userData.glow = glow;
-      clickTile.userData.redGlow = redGlow;
-      clickTile.userData.border = border;
-      clickTile.userData.raisedHighlight = raisedHighlight;
-
-      tileGroup.add(visibleTile);
-      tileGroup.add(clickTile);
-      tileGroup.add(topLine);
-      tileGroup.add(bottomLine);
-      tileGroup.add(leftLine);
-      tileGroup.add(rightLine);
-      tileGroup.add(outerGlow);
-      tileGroup.add(glow);
-      tileGroup.add(redGlow);
-      tileGroup.add(border);
-      tileGroup.add(raisedHighlight);
-
-      tileMeshes.push(clickTile);
-      platformGroup.add(tileGroup);
+    if (hits.length > 0) {
+      return hits[0].object;
     }
+
+    return null;
   }
 
-  platformGroup.rotation.x = savedRotation.x;
-  platformGroup.rotation.y = savedRotation.y;
-  platformGroup.position.set(0, -0.2, 0);
+  function createPlatform(size) {
+    if (platform) {
+      savedRotation.x = platform.rotation.x;
+      savedRotation.y = platform.rotation.y;
+      scene.remove(platform);
+    }
 
-  if (size === 3) {
-    platformGroup.scale.set(1.15, 1, 1.15);
-    camera.position.set(5, 5, 7);
-  } else if (size === 6) {
-    platformGroup.scale.set(0.95, 1, 0.95);
-    camera.position.set(5, 5, 7.8);
-  } else {
-    platformGroup.scale.set(0.75, 1, 0.75);
-    camera.position.set(5, 5, 9.5);
+    currentSize = size;
+    selectedSquare = null;
+    tileMeshes = [];
+    plantedItems = {};
+    tileWaitingForRemoval = null;
+    removedTileIds = [];
+    removeSelectedTiles = [];
+
+    if (removePopup) removePopup.classList.remove("open");
+
+    const platformGroup = new THREE.Group();
+
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const tileGroup = new THREE.Group();
+
+        tileGroup.position.x = col - size / 2 + 0.5;
+        tileGroup.position.z = row - size / 2 + 0.5;
+        tileGroup.position.y = 0;
+
+        const visibleTile = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 0.35, 1),
+          [
+            materials.tileSide,
+            materials.tileSide,
+            materials.tileTop,
+            materials.tileSide,
+            materials.tileSide,
+            materials.tileSide
+          ]
+        );
+
+        visibleTile.position.y = 0;
+        visibleTile.castShadow = true;
+        visibleTile.receiveShadow = true;
+
+        const clickTile = new THREE.Mesh(
+          new THREE.PlaneGeometry(1, 1),
+          new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
+
+        clickTile.rotation.x = -Math.PI / 2;
+        clickTile.position.y = 0.19;
+        clickTile.userData.isTile = true;
+        clickTile.userData.tileId = `${row}-${col}`;
+        clickTile.userData.tileGroup = tileGroup;
+        clickTile.userData.visibleTile = visibleTile;
+        clickTile.userData.removed = false;
+
+        const lineMaterial = new THREE.LineBasicMaterial({
+          color: 0xf0dfb8,
+          transparent: true,
+          opacity: 0.58
+        });
+
+        const lineY = 0.196;
+
+        const topLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-0.5, lineY, -0.5),
+            new THREE.Vector3(0.5, lineY, -0.5)
+          ]),
+          lineMaterial
+        );
+
+        const bottomLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-0.5, lineY, 0.5),
+            new THREE.Vector3(0.5, lineY, 0.5)
+          ]),
+          lineMaterial
+        );
+
+        const leftLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-0.5, lineY, -0.5),
+            new THREE.Vector3(-0.5, lineY, 0.5)
+          ]),
+          lineMaterial
+        );
+
+        const rightLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0.5, lineY, -0.5),
+            new THREE.Vector3(0.5, lineY, 0.5)
+          ]),
+          lineMaterial
+        );
+
+        const outerGlow = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.08, 1.08),
+          new THREE.MeshBasicMaterial({
+            color: 0xffdf8a,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
+
+        outerGlow.rotation.x = -Math.PI / 2;
+        outerGlow.position.y = 0.205;
+
+        const glow = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.9, 0.9),
+          new THREE.MeshBasicMaterial({
+            color: 0xfff1b8,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
+
+        glow.rotation.x = -Math.PI / 2;
+        glow.position.y = 0.215;
+
+        const redGlow = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.08, 1.08),
+          new THREE.MeshBasicMaterial({
+            color: 0xff4b4b,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
+
+        redGlow.rotation.x = -Math.PI / 2;
+        redGlow.position.y = 0.225;
+
+        const border = new THREE.LineSegments(
+          new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
+          new THREE.LineBasicMaterial({
+            color: 0xfff1b8,
+            transparent: true,
+            opacity: 0
+          })
+        );
+
+        border.rotation.x = -Math.PI / 2;
+        border.position.y = 0.24;
+
+        const raisedHighlight = new THREE.Mesh(
+          new THREE.BoxGeometry(0.78, 0.045, 0.78),
+          new THREE.MeshBasicMaterial({
+            color: 0xfff4c7,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false
+          })
+        );
+
+        raisedHighlight.position.y = 0.215;
+
+        clickTile.userData.outerGlow = outerGlow;
+        clickTile.userData.glow = glow;
+        clickTile.userData.redGlow = redGlow;
+        clickTile.userData.border = border;
+        clickTile.userData.raisedHighlight = raisedHighlight;
+
+        tileGroup.add(visibleTile);
+        tileGroup.add(clickTile);
+        tileGroup.add(topLine);
+        tileGroup.add(bottomLine);
+        tileGroup.add(leftLine);
+        tileGroup.add(rightLine);
+        tileGroup.add(outerGlow);
+        tileGroup.add(glow);
+        tileGroup.add(redGlow);
+        tileGroup.add(border);
+        tileGroup.add(raisedHighlight);
+
+        tileMeshes.push(clickTile);
+        platformGroup.add(tileGroup);
+      }
+    }
+
+    platformGroup.rotation.x = savedRotation.x;
+    platformGroup.rotation.y = savedRotation.y;
+    platformGroup.position.set(0, -0.2, 0);
+
+    if (size === 3) {
+      platformGroup.scale.set(1.15, 1, 1.15);
+      camera.position.set(5, 5, 7);
+    } else if (size === 6) {
+      platformGroup.scale.set(0.95, 1, 0.95);
+      camera.position.set(5, 5, 7.8);
+    } else {
+      platformGroup.scale.set(0.75, 1, 0.75);
+      camera.position.set(5, 5, 9.5);
+    }
+
+    camera.lookAt(0, 0, 0);
+
+    platform = platformGroup;
+    scene.add(platform);
   }
-
-  camera.lookAt(0, 0, 0);
-
-  platform = platformGroup;
-  scene.add(platform);
-}
 
   createPlatform(6);
 
@@ -640,15 +695,39 @@ document.addEventListener("DOMContentLoaded", () => {
   let didDrag = false;
   let previousX = 0;
   let previousY = 0;
+  let removeMouseDown = false;
 
   container.addEventListener("mousedown", (e) => {
-    dragging = true;
     didDrag = false;
+
+    if (selectedTool === "remove") {
+      removeMouseDown = true;
+      removeDragActive = true;
+      clearRemoveSelection();
+
+      const tile = getTileFromMouseEvent(e);
+      addTileToRemoveSelection(tile);
+
+      return;
+    }
+
+    dragging = true;
     previousX = e.clientX;
     previousY = e.clientY;
   });
 
   document.addEventListener("mousemove", (e) => {
+    if (removeDragActive && selectedTool === "remove") {
+      const tile = getTileFromMouseEvent(e);
+
+      if (tile) {
+        didDrag = true;
+        addTileToRemoveSelection(tile);
+      }
+
+      return;
+    }
+
     if (!dragging || !platform) return;
 
     const moveX = e.clientX - previousX;
@@ -664,36 +743,42 @@ document.addEventListener("DOMContentLoaded", () => {
     previousY = e.clientY;
   });
 
-  document.addEventListener("mouseup", () => {
+  document.addEventListener("mouseup", (e) => {
+    if (removeDragActive && selectedTool === "remove") {
+      removeDragActive = false;
+
+      if (!didDrag) {
+        updateMouseFromEvent(e);
+
+        plantRaycaster.setFromCamera(mouse, camera);
+
+        const plantHits = plantRaycaster.intersectObjects(
+          Object.values(plantedItems).filter(Boolean),
+          true
+        );
+
+        if (plantHits.length > 0) {
+          const tileId = plantHits[0].object.userData.tileId;
+          clearRemoveSelection();
+          removePlantByTileId(tileId);
+          removeMouseDown = false;
+          return;
+        }
+      }
+
+      openRemoveTilesPopup();
+      removeMouseDown = false;
+      return;
+    }
+
     dragging = false;
   });
 
-  function updateMouseFromEvent(e) {
-    const rect = renderer.domElement.getBoundingClientRect();
-
-    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-  }
-
   container.addEventListener("click", (e) => {
+    if (selectedTool === "remove") return;
     if (didDrag) return;
 
     updateMouseFromEvent(e);
-
-    if (selectedTool === "remove") {
-      plantRaycaster.setFromCamera(mouse, camera);
-
-      const plantHits = plantRaycaster.intersectObjects(
-        Object.values(plantedItems).filter(Boolean),
-        true
-      );
-
-      if (plantHits.length > 0) {
-        const tileId = plantHits[0].object.userData.tileId;
-        removePlantByTileId(tileId);
-        return;
-      }
-    }
 
     raycaster.setFromCamera(mouse, camera);
 
@@ -703,19 +788,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const clickedTile = hits[0].object;
 
       if (clickedTile.userData.removed) return;
-
-      if (selectedTool === "remove") {
-        const tileId = clickedTile.userData.tileId;
-
-        if (plantedItems[tileId]) {
-          showPlantRemoveFlash(clickedTile);
-          removePlantFromSquare(clickedTile);
-          return;
-        }
-
-        setRemoveSquare(clickedTile);
-        return;
-      }
 
       setSelectedSquare(clickedTile);
 
@@ -727,37 +799,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (backRemove) {
     backRemove.addEventListener("click", () => {
-      if (tileWaitingForRemoval) clearTileHighlight(tileWaitingForRemoval);
+      clearRemoveSelection();
 
-      tileWaitingForRemoval = null;
-
-      if (removePopup) removePopup.classList.remove("open");
+      if (removePopup) {
+        removePopup.classList.remove("open");
+      }
     });
   }
 
   if (confirmRemove) {
     confirmRemove.addEventListener("click", () => {
-      if (!tileWaitingForRemoval) return;
+      if (removeSelectedTiles.length === 0) return;
 
-      const tileId = tileWaitingForRemoval.userData.tileId;
+      removeSelectedTiles.forEach((tile) => {
+        const tileId = tile.userData.tileId;
 
-      if (!removedTileIds.includes(tileId)) {
-        removedTileIds.push(tileId);
-      }
+        if (!removedTileIds.includes(tileId)) {
+          removedTileIds.push(tileId);
+        }
 
-      removePlantFromSquare(tileWaitingForRemoval);
+        removePlantFromSquare(tile);
 
-      tileWaitingForRemoval.userData.removed = true;
-      tileWaitingForRemoval.userData.tileGroup.visible = false;
+        tile.userData.removed = true;
+        tile.userData.tileGroup.visible = false;
 
-      tileMeshes = tileMeshes.filter((tile) => tile !== tileWaitingForRemoval);
-      plantedItems[tileId] = null;
+        plantedItems[tileId] = null;
 
-      if (selectedSquare === tileWaitingForRemoval) selectedSquare = null;
+        if (selectedSquare === tile) {
+          selectedSquare = null;
+        }
+      });
 
+      tileMeshes = tileMeshes.filter((tile) => !removeSelectedTiles.includes(tile));
+
+      removeSelectedTiles = [];
       tileWaitingForRemoval = null;
 
-      if (removePopup) removePopup.classList.remove("open");
+      if (removePopup) {
+        removePopup.classList.remove("open");
+      }
     });
   }
 
