@@ -445,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tileGroup.position.y = 0;
 
         const visibleTile = new THREE.Mesh(
-       new THREE.BoxGeometry(1.01, 0.35, 1.01)
+new THREE.BoxGeometry(1, 0.35, 1)
           [
             materials.tileSide,
             materials.tileSide,
@@ -564,9 +564,9 @@ new THREE.PlaneGeometry(1, 1)
     }
 
 const tanGrid = new THREE.GridHelper(size, size, 0xf0dfb8, 0xf0dfb8);
-tanGrid.position.y = 0.192;
+tanGrid.position.y = 0.205;
 tanGrid.material.transparent = true;
-tanGrid.material.opacity = 0.8;
+tanGrid.material.opacity = 0.75;
 platformGroup.add(tanGrid);
 
     platformGroup.rotation.x = savedRotation.x;
