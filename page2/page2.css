@@ -51,6 +51,28 @@ button {
   top: 83px; /* sits right below bookmark */
 }
 
+.saved-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.saved-row .saved-item {
+  flex: 1;
+}
+
+.delete-save {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 11px;
+  background: #9b3d3d;
+  color: #f0dfb8;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
 .name-save-popup,
 .saved-list-popup {
   position: absolute;

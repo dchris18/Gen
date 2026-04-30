@@ -919,31 +919,56 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedSquare = null;
   }
 
-  function renderSavedList() {
-    const saves = getSavedGardens();
+function renderSavedList() {
+  const saves = getSavedGardens();
 
-    if (!savedList) return;
+  if (!savedList) return;
 
-    savedList.innerHTML = "";
+  savedList.innerHTML = "";
 
-    if (saves.length === 0) {
-      savedList.innerHTML = `<p style="color:#7a4144; margin:0;">No saves yet.</p>`;
-      return;
-    }
+  if (saves.length === 0) {
+    savedList.innerHTML = `<p style="color:#7a4144; margin:0;">No saves yet.</p>`;
+    return;
+  }
 
-    saves.forEach((saveData) => {
-      const button = document.createElement("button");
-      button.className = "saved-item";
-      button.textContent = saveData.name;
+  saves.forEach((saveData) => {
+    const row = document.createElement("div");
+    row.className = "saved-row";
 
-      button.addEventListener("click", () => {
-        loadGarden(saveData);
-        if (savedListPopup) savedListPopup.classList.remove("open");
+    const button = document.createElement("button");
+    button.className = "saved-item";
+    button.textContent = saveData.name;
+
+    button.addEventListener("click", () => {
+      loadGarden(saveData);
+      if (savedListPopup) savedListPopup.classList.remove("open");
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "delete-save";
+    deleteButton.textContent = "×";
+    deleteButton.setAttribute("aria-label", "Delete save");
+
+    deleteButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const wantsDelete = confirm(`Remove save "${saveData.name}"?`);
+
+      if (!wantsDelete) return;
+
+      const updatedSaves = getSavedGardens().filter((item) => {
+        return item.id !== saveData.id;
       });
 
-      savedList.appendChild(button);
+      setSavedGardens(updatedSaves);
+      renderSavedList();
     });
-  }
+
+    row.appendChild(button);
+    row.appendChild(deleteButton);
+    savedList.appendChild(row);
+  });
+}
 
   if (saveButton) {
     saveButton.addEventListener("click", () => {
