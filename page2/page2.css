@@ -151,16 +151,18 @@ button {
   margin-bottom: 0;
 }
 
-.plant-card img {
-  width: 42px;
-  height: 42px;
-  object-fit: contain;
-}
-
 .plant-card:hover,
 .plant-card.selected {
   background: #e8b292;
   transform: scale(1.02);
+}
+
+.plant-preview {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
 }
 
 .tool-row {
@@ -180,14 +182,6 @@ button {
   padding: 0;
   cursor: pointer;
   transition: transform 0.18s ease;
-}
-
-.plant-preview {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
 }
 
 .tool-btn.selected {
