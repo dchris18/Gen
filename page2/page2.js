@@ -16,10 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmRemove = document.querySelector(".confirm-remove");
   const backRemove = document.querySelector(".back-remove");
 
-  if (!container) {
-    console.error("Missing #three-platform div in HTML");
-    return;
-  }
+  if (!container) return;
 
   let selectedPlant = null;
   let selectedTool = null;
@@ -30,10 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let plantedItems = {};
   let tileWaitingForRemoval = null;
 
-  let savedRotation = {
-    x: 0.55,
-    y: -0.75
-  };
+  let savedRotation = { x: 0.55, y: -0.75 };
 
   const scene = new THREE.Scene();
 
@@ -72,54 +66,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const mouse = new THREE.Vector2();
 
   const materials = {
-    soil: new THREE.MeshStandardMaterial({
-      color: 0x7a5038,
-      roughness: 0.85
-    }),
-    soilDark: new THREE.MeshStandardMaterial({
-      color: 0x5f3f2f,
-      roughness: 0.9
-    }),
-    stem: new THREE.MeshStandardMaterial({
-      color: 0x55784b,
-      roughness: 0.65
-    }),
-    stemLight: new THREE.MeshStandardMaterial({
-      color: 0x6f985d,
-      roughness: 0.65
-    }),
-    leaf: new THREE.MeshStandardMaterial({
-      color: 0x6f985d,
-      roughness: 0.6
-    }),
-    leafDark: new THREE.MeshStandardMaterial({
-      color: 0x4f7445,
-      roughness: 0.7
-    }),
-    leafLight: new THREE.MeshStandardMaterial({
-      color: 0x92b978,
-      roughness: 0.55
-    }),
-    flowerPetal: new THREE.MeshStandardMaterial({
-      color: 0xe8a3a8,
-      roughness: 0.55
-    }),
-    flowerPetalLight: new THREE.MeshStandardMaterial({
-      color: 0xf2c0bd,
-      roughness: 0.5
-    }),
-    flowerCenter: new THREE.MeshStandardMaterial({
-      color: 0xf0d77a,
-      roughness: 0.55
-    }),
-    pot: new THREE.MeshStandardMaterial({
-      color: 0xc98961,
+    tileTop: new THREE.MeshStandardMaterial({
+      color: 0x5f7852,
       roughness: 0.75
     }),
-    potDark: new THREE.MeshStandardMaterial({
-      color: 0x9b6248,
+    tileSide: new THREE.MeshStandardMaterial({
+      color: 0x465d3e,
       roughness: 0.8
-    })
+    }),
+    soil: new THREE.MeshStandardMaterial({ color: 0x7a5038, roughness: 0.85 }),
+    soilDark: new THREE.MeshStandardMaterial({ color: 0x5f3f2f, roughness: 0.9 }),
+    stem: new THREE.MeshStandardMaterial({ color: 0x55784b, roughness: 0.65 }),
+    stemLight: new THREE.MeshStandardMaterial({ color: 0x6f985d, roughness: 0.65 }),
+    leaf: new THREE.MeshStandardMaterial({ color: 0x6f985d, roughness: 0.6 }),
+    leafDark: new THREE.MeshStandardMaterial({ color: 0x4f7445, roughness: 0.7 }),
+    leafLight: new THREE.MeshStandardMaterial({ color: 0x92b978, roughness: 0.55 }),
+    flowerPetal: new THREE.MeshStandardMaterial({ color: 0xe8a3a8, roughness: 0.55 }),
+    flowerPetalLight: new THREE.MeshStandardMaterial({ color: 0xf2c0bd, roughness: 0.5 }),
+    flowerCenter: new THREE.MeshStandardMaterial({ color: 0xf0d77a, roughness: 0.55 }),
+    potDark: new THREE.MeshStandardMaterial({ color: 0x9b6248, roughness: 0.8 })
   };
 
   if (eyeButton && gridMenu) {
@@ -159,26 +124,19 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedPlant = card.dataset.plant;
       selectedTool = "plant";
 
-      if (plantMenu) {
-        plantMenu.classList.remove("open");
-      }
+      if (plantMenu) plantMenu.classList.remove("open");
 
-      if (selectedSquare) {
+      if (selectedSquare && !selectedSquare.userData.removed) {
         plantOnSquare(selectedSquare);
       }
     });
   });
 
   function roundedLeaf(width, height, depth, material) {
-    const leaf = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 20, 14),
-      material
-    );
-
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 14), material);
     leaf.scale.set(width, height, depth);
     leaf.castShadow = true;
     leaf.receiveShadow = true;
-
     return leaf;
   }
 
@@ -191,7 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
     stem.position.y = height / 2;
     stem.castShadow = true;
     stem.receiveShadow = true;
-
     return stem;
   }
 
@@ -203,29 +160,20 @@ document.addEventListener("DOMContentLoaded", () => {
       materials.potDark
     );
     saucer.position.y = 0.04;
-    saucer.castShadow = true;
-    saucer.receiveShadow = true;
 
     const soil = new THREE.Mesh(
       new THREE.CylinderGeometry(0.3, 0.33, 0.11, 28),
       materials.soil
     );
     soil.position.y = 0.12;
-    soil.castShadow = true;
-    soil.receiveShadow = true;
 
     const topSoil = new THREE.Mesh(
       new THREE.CylinderGeometry(0.25, 0.27, 0.025, 28),
       materials.soilDark
     );
     topSoil.position.y = 0.19;
-    topSoil.castShadow = true;
-    topSoil.receiveShadow = true;
 
-    group.add(saucer);
-    group.add(soil);
-    group.add(topSoil);
-
+    group.add(saucer, soil, topSoil);
     return group;
   }
 
@@ -238,10 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function createSproutPlant() {
     const plant = new THREE.Group();
-
     plant.add(makeSoilBase());
 
-    const stem = makeStem(0.58, 0.035, materials.stem);
+    const stem = makeStem(0.58);
     stem.position.y = 0.18;
     plant.add(stem);
 
@@ -269,7 +216,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function createFernPlant() {
     const plant = new THREE.Group();
-
     plant.add(makeSoilBase());
 
     for (let i = 0; i < 10; i++) {
@@ -299,24 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
       leaf.rotation.x = Math.sin(angle) * 0.55;
       leaf.rotation.y = Math.cos(angle) * 0.45;
       plant.add(leaf);
-
-      const smallLeafA = roundedLeaf(0.7, 0.13, 0.28, materials.leafDark);
-      smallLeafA.position.set(
-        Math.cos(angle + 0.25) * 0.18,
-        0.43,
-        Math.sin(angle + 0.25) * 0.18
-      );
-      smallLeafA.rotation.z = angle + 0.4;
-      plant.add(smallLeafA);
-
-      const smallLeafB = roundedLeaf(0.7, 0.13, 0.28, materials.leafLight);
-      smallLeafB.position.set(
-        Math.cos(angle - 0.25) * 0.22,
-        0.48,
-        Math.sin(angle - 0.25) * 0.22
-      );
-      smallLeafB.rotation.z = angle - 0.4;
-      plant.add(smallLeafB);
     }
 
     plant.scale.set(0.68, 0.68, 0.68);
@@ -325,22 +253,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function createFlowerPlant() {
     const plant = new THREE.Group();
-
     plant.add(makeSoilBase());
 
-    const mainStem = makeStem(0.72, 0.035, materials.stem);
+    const mainStem = makeStem(0.72);
     mainStem.position.y = 0.18;
     plant.add(mainStem);
-
-    const sideStemA = makeStem(0.42, 0.022, materials.stemLight);
-    sideStemA.position.set(-0.08, 0.25, 0);
-    sideStemA.rotation.z = 0.6;
-    plant.add(sideStemA);
-
-    const sideStemB = makeStem(0.38, 0.022, materials.stemLight);
-    sideStemB.position.set(0.08, 0.3, 0);
-    sideStemB.rotation.z = -0.6;
-    plant.add(sideStemB);
 
     const leftLeaf = roundedLeaf(1.05, 0.2, 0.45, materials.leaf);
     leftLeaf.position.set(-0.2, 0.52, 0.02);
@@ -370,9 +287,9 @@ document.addEventListener("DOMContentLoaded", () => {
         Math.sin(angle) * 0.02,
         Math.sin(angle) * 0.14
       );
+
       petal.scale.set(1.05, 0.42, 0.75);
       petal.rotation.y = angle;
-      petal.castShadow = true;
       flowerGroup.add(petal);
     }
 
@@ -380,9 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
       new THREE.SphereGeometry(0.105, 18, 14),
       materials.flowerCenter
     );
-    center.castShadow = true;
-    flowerGroup.add(center);
 
+    flowerGroup.add(center);
     flowerGroup.rotation.x = 0.15;
     plant.add(flowerGroup);
 
@@ -393,18 +309,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function createPlant(type) {
     let plant;
 
-    if (type === "fern") {
-      plant = createFernPlant();
-    } else if (type === "flower") {
-      plant = createFlowerPlant();
-    } else {
-      plant = createSproutPlant();
-    }
+    if (type === "fern") plant = createFernPlant();
+    else if (type === "flower") plant = createFlowerPlant();
+    else plant = createSproutPlant();
 
     plant.userData.isPlant = true;
     plant.rotation.y = Math.random() * Math.PI * 2;
-    plant.position.y = 0.08;
-
+    plant.position.y = 0.24;
     return plant;
   }
 
@@ -420,14 +331,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function removePlantByTileId(tileId) {
     const tile = tileMeshes.find((item) => item.userData.tileId === tileId);
 
-    if (tile && plantedItems[tileId]) {
-      tile.parent.remove(plantedItems[tileId]);
-      plantedItems[tileId] = null;
+    if (tile) {
+      showPlantRemoveFlash(tile);
+      removePlantFromSquare(tile);
     }
   }
 
   function plantOnSquare(tile) {
-    if (!selectedPlant) return;
+    if (!selectedPlant || tile.userData.removed) return;
 
     const tileId = tile.userData.tileId;
 
@@ -445,9 +356,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tile.userData.outerGlow.material.opacity = 0;
     tile.userData.glow.material.opacity = 0;
+    tile.userData.redGlow.material.opacity = 0;
     tile.userData.border.material.opacity = 0;
     tile.userData.raisedHighlight.material.opacity = 0;
-    tile.userData.redGlow.material.opacity = 0;
     tile.userData.border.material.color.set(0xfff1b8);
   }
 
@@ -456,11 +367,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selectedSquare = tile;
 
-    selectedSquare.userData.outerGlow.material.opacity = 0.25;
-    selectedSquare.userData.glow.material.opacity = 0.42;
-    selectedSquare.userData.border.material.opacity = 1;
-    selectedSquare.userData.raisedHighlight.material.opacity = 0.22;
-    selectedSquare.userData.border.material.color.set(0xfff1b8);
+    tile.userData.outerGlow.material.opacity = 0.25;
+    tile.userData.glow.material.opacity = 0.42;
+    tile.userData.border.material.opacity = 1;
+    tile.userData.raisedHighlight.material.opacity = 0.22;
+    tile.userData.border.material.color.set(0xfff1b8);
   }
 
   function setRemoveSquare(tile) {
@@ -469,27 +380,34 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedSquare = tile;
     tileWaitingForRemoval = tile;
 
-    selectedSquare.userData.redGlow.material.opacity = 0.58;
-    selectedSquare.userData.border.material.opacity = 1;
-    selectedSquare.userData.border.material.color.set(0xff4b4b);
+    tile.userData.redGlow.material.opacity = 0.62;
+    tile.userData.border.material.opacity = 1;
+    tile.userData.raisedHighlight.material.opacity = 0.16;
+    tile.userData.border.material.color.set(0xff4b4b);
 
-    if (removePopup) {
-      removePopup.classList.add("open");
-    }
+    if (removePopup) removePopup.classList.add("open");
+  }
+
+  function showPlantRemoveFlash(tile) {
+    clearTileHighlight(selectedSquare);
+
+    selectedSquare = tile;
+
+    tile.userData.redGlow.material.opacity = 0.68;
+    tile.userData.border.material.opacity = 1;
+    tile.userData.border.material.color.set(0xff4b4b);
+
+    setTimeout(() => {
+      clearTileHighlight(tile);
+      if (selectedSquare === tile) selectedSquare = null;
+    }, 180);
   }
 
   function createPlatform(size) {
     if (platform) {
       savedRotation.x = platform.rotation.x;
       savedRotation.y = platform.rotation.y;
-
       scene.remove(platform);
-
-      platform.traverse((child) => {
-        if (child.geometry) {
-          child.geometry.dispose();
-        }
-      });
     }
 
     currentSize = size;
@@ -498,37 +416,9 @@ document.addEventListener("DOMContentLoaded", () => {
     plantedItems = {};
     tileWaitingForRemoval = null;
 
-    if (removePopup) {
-      removePopup.classList.remove("open");
-    }
+    if (removePopup) removePopup.classList.remove("open");
 
     const platformGroup = new THREE.Group();
-
-    const platformGeometry = new THREE.BoxGeometry(size, 0.35, size);
-
-    const platformMaterials = [
-      new THREE.MeshStandardMaterial({ color: 0x5f7852, roughness: 0.72 }),
-      new THREE.MeshStandardMaterial({ color: 0x4f6744, roughness: 0.72 }),
-      new THREE.MeshStandardMaterial({ color: 0x6f875e, roughness: 0.72 }),
-      new THREE.MeshStandardMaterial({ color: 0x3f5237, roughness: 0.72 }),
-      new THREE.MeshStandardMaterial({ color: 0x5a704c, roughness: 0.72 }),
-      new THREE.MeshStandardMaterial({ color: 0x465d3e, roughness: 0.72 })
-    ];
-
-    const base = new THREE.Mesh(platformGeometry, platformMaterials);
-    base.receiveShadow = true;
-    platformGroup.add(base);
-
-    const edges = new THREE.EdgesGeometry(platformGeometry);
-    const outline = new THREE.LineSegments(
-      edges,
-      new THREE.LineBasicMaterial({ color: 0xf0dfb8 })
-    );
-    base.add(outline);
-
-    const grid = new THREE.GridHelper(size, size, 0x9fb892, 0x9fb892);
-    grid.position.y = 0.181;
-    platformGroup.add(grid);
 
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
@@ -536,10 +426,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tileGroup.position.x = col - size / 2 + 0.5;
         tileGroup.position.z = row - size / 2 + 0.5;
-        tileGroup.position.y = 0.205;
+        tileGroup.position.y = 0;
+
+        const visibleTile = new THREE.Mesh(
+          new THREE.BoxGeometry(0.96, 0.35, 0.96),
+          [
+            materials.tileSide,
+            materials.tileSide,
+            materials.tileTop,
+            materials.tileSide,
+            materials.tileSide,
+            materials.tileSide
+          ]
+        );
+
+        visibleTile.position.y = 0;
+        visibleTile.castShadow = true;
+        visibleTile.receiveShadow = true;
 
         const clickTile = new THREE.Mesh(
-          new THREE.PlaneGeometry(1, 1),
+          new THREE.PlaneGeometry(0.96, 0.96),
           new THREE.MeshBasicMaterial({
             transparent: true,
             opacity: 0,
@@ -549,9 +455,11 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         clickTile.rotation.x = -Math.PI / 2;
+        clickTile.position.y = 0.19;
         clickTile.userData.isTile = true;
         clickTile.userData.tileId = `${row}-${col}`;
         clickTile.userData.tileGroup = tileGroup;
+        clickTile.userData.visibleTile = visibleTile;
         clickTile.userData.removed = false;
 
         const outerGlow = new THREE.Mesh(
@@ -566,10 +474,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         outerGlow.rotation.x = -Math.PI / 2;
-        outerGlow.position.y = 0.006;
+        outerGlow.position.y = 0.205;
 
         const glow = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.92, 0.92),
+          new THREE.PlaneGeometry(0.9, 0.9),
           new THREE.MeshBasicMaterial({
             color: 0xfff1b8,
             transparent: true,
@@ -580,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         glow.rotation.x = -Math.PI / 2;
-        glow.position.y = 0.012;
+        glow.position.y = 0.215;
 
         const redGlow = new THREE.Mesh(
           new THREE.PlaneGeometry(1.08, 1.08),
@@ -594,7 +502,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         redGlow.rotation.x = -Math.PI / 2;
-        redGlow.position.y = 0.03;
+        redGlow.position.y = 0.225;
 
         const border = new THREE.LineSegments(
           new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.96, 0.96)),
@@ -606,10 +514,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         border.rotation.x = -Math.PI / 2;
-        border.position.y = 0.035;
+        border.position.y = 0.24;
 
         const raisedHighlight = new THREE.Mesh(
-          new THREE.BoxGeometry(0.82, 0.04, 0.82),
+          new THREE.BoxGeometry(0.78, 0.045, 0.78),
           new THREE.MeshBasicMaterial({
             color: 0xfff4c7,
             transparent: true,
@@ -618,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
           })
         );
 
-        raisedHighlight.position.y = 0.025;
+        raisedHighlight.position.y = 0.215;
 
         clickTile.userData.outerGlow = outerGlow;
         clickTile.userData.glow = glow;
@@ -626,6 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clickTile.userData.border = border;
         clickTile.userData.raisedHighlight = raisedHighlight;
 
+        tileGroup.add(visibleTile);
         tileGroup.add(clickTile);
         tileGroup.add(outerGlow);
         tileGroup.add(glow);
@@ -640,7 +549,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
-    platformGroup.rotation.z = 0;
     platformGroup.position.set(0, -0.2, 0);
 
     if (size === 3) {
@@ -649,7 +557,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (size === 6) {
       platformGroup.scale.set(0.95, 1, 0.95);
       camera.position.set(5, 5, 7.8);
-    } else if (size === 9) {
+    } else {
       platformGroup.scale.set(0.75, 1, 0.75);
       camera.position.set(5, 5, 9.5);
     }
@@ -664,12 +572,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   gridButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      const size = Number(button.dataset.grid);
-      createPlatform(size);
-
-      if (gridMenu) {
-        gridMenu.classList.remove("open");
-      }
+      createPlatform(Number(button.dataset.grid));
+      if (gridMenu) gridMenu.classList.remove("open");
     });
   });
 
@@ -691,13 +595,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const moveX = e.clientX - previousX;
     const moveY = e.clientY - previousY;
 
-    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) {
-      didDrag = true;
-    }
+    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) didDrag = true;
 
     platform.rotation.y += moveX * 0.01;
     platform.rotation.x += moveY * 0.01;
-
     platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
 
     previousX = e.clientX;
@@ -710,7 +611,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateMouseFromEvent(e) {
     const rect = renderer.domElement.getBoundingClientRect();
-
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   }
@@ -748,6 +648,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const tileId = clickedTile.userData.tileId;
 
         if (plantedItems[tileId]) {
+          showPlantRemoveFlash(clickedTile);
           removePlantFromSquare(clickedTile);
           return;
         }
@@ -766,15 +667,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (backRemove) {
     backRemove.addEventListener("click", () => {
-      if (tileWaitingForRemoval) {
-        clearTileHighlight(tileWaitingForRemoval);
-      }
+      if (tileWaitingForRemoval) clearTileHighlight(tileWaitingForRemoval);
 
       tileWaitingForRemoval = null;
 
-      if (removePopup) {
-        removePopup.classList.remove("open");
-      }
+      if (removePopup) removePopup.classList.remove("open");
     });
   }
 
@@ -787,17 +684,16 @@ document.addEventListener("DOMContentLoaded", () => {
       removePlantFromSquare(tileWaitingForRemoval);
 
       tileWaitingForRemoval.userData.removed = true;
-      tileWaitingForRemoval.parent.visible = false;
+      tileWaitingForRemoval.userData.tileGroup.visible = false;
 
       tileMeshes = tileMeshes.filter((tile) => tile !== tileWaitingForRemoval);
       plantedItems[tileId] = null;
 
-      selectedSquare = null;
+      if (selectedSquare === tileWaitingForRemoval) selectedSquare = null;
+
       tileWaitingForRemoval = null;
 
-      if (removePopup) {
-        removePopup.classList.remove("open");
-      }
+      if (removePopup) removePopup.classList.remove("open");
     });
   }
 
@@ -810,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
       camera.position.z = Math.max(3, Math.min(10, camera.position.z));
     } else if (currentSize === 6) {
       camera.position.z = Math.max(4, Math.min(15, camera.position.z));
-    } else if (currentSize === 9) {
+    } else {
       camera.position.z = Math.max(5, Math.min(20, camera.position.z));
     }
 
