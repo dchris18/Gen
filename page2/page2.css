@@ -24,8 +24,8 @@ button {
 
 .screen {
   position: relative;
-  width: 320px;
-  height: 694px;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background: #7f8d7b;
 }
@@ -160,11 +160,10 @@ button {
 
 .planner-board {
   position: absolute;
-  top: 24px;
-  left: 10px;
-  width: 300px;
-  height: 560px;
-  border-radius: 20px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
   background: #9a8164;
   border: 8px solid #de9572;
   box-shadow:
