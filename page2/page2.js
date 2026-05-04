@@ -33,15 +33,20 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedPlant = null;
   let selectedTool = null;
   let platform;
+  let addPlane;
   let currentSize = 6;
   let selectedSquare = null;
+
   let tileMeshes = [];
+  let tileStacks = {};
   let plantedItems = {};
-  let tileWaitingForRemoval = null;
   let removedTileIds = [];
 
   let removeDragActive = false;
   let removeSelectedTiles = [];
+
+  let addDragActive = false;
+  let addedThisDrag = [];
 
   let savedRotation = { x: 0.55, y: -0.75 };
 
@@ -341,6 +346,38 @@ document.addEventListener("DOMContentLoaded", () => {
     return plant;
   }
 
+  function coordKey(row, col) {
+    return `${row}-${col}`;
+  }
+
+  function registerTile(tile) {
+    const key = tile.userData.coordKey;
+
+    if (!tileStacks[key]) {
+      tileStacks[key] = [];
+    }
+
+    tileStacks[key].push(tile);
+    tileStacks[key].sort((a, b) => a.userData.level - b.userData.level);
+  }
+
+  function getTopVisibleTile(row, col) {
+    const stack = tileStacks[coordKey(row, col)] || [];
+    const visibleTiles = stack.filter((tile) => !tile.userData.removed);
+
+    if (visibleTiles.length === 0) return null;
+
+    return visibleTiles.sort((a, b) => b.userData.level - a.userData.level)[0];
+  }
+
+  function getTopLevel(row, col) {
+    const stack = tileStacks[coordKey(row, col)] || [];
+
+    if (stack.length === 0) return -1;
+
+    return Math.max(...stack.map((tile) => tile.userData.level));
+  }
+
   function removePlantFromSquare(tile) {
     const tileId = tile.userData.tileId;
 
@@ -420,13 +457,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     removeSelectedTiles = [];
-    tileWaitingForRemoval = null;
   }
 
   function openRemoveTilesPopup() {
     if (removeSelectedTiles.length === 0) return;
-
-    tileWaitingForRemoval = removeSelectedTiles[0];
 
     if (removePopup) {
       const title = removePopup.querySelector("h2");
@@ -469,6 +503,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     clearTileHighlight(tile);
     plantedItems[tileId] = null;
+
+    if (!removedTileIds.includes(tileId)) {
+      removedTileIds.push(tileId);
+    }
   }
 
   function restoreTile(tile) {
@@ -493,6 +531,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 220);
   }
 
+  function flashAddedTile(tile) {
+    tile.userData.greenGlow.material.opacity = 0.65;
+    tile.userData.border.material.opacity = 1;
+    tile.userData.raisedHighlight.material.opacity = 0.18;
+    tile.userData.border.material.color.set(0x7dff8a);
+
+    setTimeout(() => {
+      clearTileHighlight(tile);
+    }, 220);
+  }
+
   function updateMouseFromEvent(e) {
     const rect = renderer.domElement.getBoundingClientRect();
 
@@ -504,13 +553,301 @@ document.addEventListener("DOMContentLoaded", () => {
     updateMouseFromEvent(e);
     raycaster.setFromCamera(mouse, camera);
 
-    const hits = raycaster.intersectObjects(tileMeshes);
+    const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
+    const hits = raycaster.intersectObjects(visibleTiles);
 
     if (hits.length > 0) {
       return hits[0].object;
     }
 
+    const hiddenHits = raycaster.intersectObjects(tileMeshes);
+
+    if (hiddenHits.length > 0) {
+      return hiddenHits[0].object;
+    }
+
     return null;
+  }
+
+  function getAddCoordFromMouseEvent(e) {
+    updateMouseFromEvent(e);
+    raycaster.setFromCamera(mouse, camera);
+
+    const tileHits = raycaster.intersectObjects(tileMeshes);
+
+    if (tileHits.length > 0) {
+      const tile = tileHits[0].object;
+
+      return {
+        row: tile.userData.row,
+        col: tile.userData.col,
+        directTile: tile
+      };
+    }
+
+    if (!addPlane) return null;
+
+    const planeHits = raycaster.intersectObject(addPlane);
+
+    if (planeHits.length === 0) return null;
+
+    const localPoint = addPlane.worldToLocal(planeHits[0].point.clone());
+
+    const col = Math.floor(localPoint.x + currentSize / 2);
+    const row = Math.floor(localPoint.y + currentSize / 2);
+
+    return {
+      row,
+      col,
+      directTile: null
+    };
+  }
+
+  function canAddAtCoord(row, col) {
+    const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
+
+    if (visibleTiles.length === 0) return true;
+
+    const rows = visibleTiles.map((tile) => tile.userData.row);
+    const cols = visibleTiles.map((tile) => tile.userData.col);
+
+    const minRow = Math.min(...rows) - 1;
+    const maxRow = Math.max(...rows) + 1;
+    const minCol = Math.min(...cols) - 1;
+    const maxCol = Math.max(...cols) + 1;
+
+    return row >= minRow && row <= maxRow && col >= minCol && col <= maxCol;
+  }
+
+  function addTileAtCoord(row, col) {
+    if (!platform) return null;
+    if (!canAddAtCoord(row, col)) return null;
+
+    const key = coordKey(row, col);
+    const stack = tileStacks[key] || [];
+    const hiddenTile = stack.find((tile) => tile.userData.removed);
+
+    if (hiddenTile) {
+      restoreTile(hiddenTile);
+      return hiddenTile;
+    }
+
+    const nextLevel = getTopLevel(row, col) + 1;
+    const newTile = createTile(row, col, nextLevel);
+
+    platform.add(newTile.userData.tileGroup);
+    flashAddedTile(newTile);
+
+    return newTile;
+  }
+
+  function addFromMouseEvent(e) {
+    const coord = getAddCoordFromMouseEvent(e);
+
+    if (!coord) return;
+
+    const key = `${coord.row}-${coord.col}`;
+
+    if (addedThisDrag.includes(key)) return;
+
+    const addedTile = addTileAtCoord(coord.row, coord.col);
+
+    if (addedTile) {
+      addedThisDrag.push(key);
+    }
+  }
+
+  function createTile(row, col, level) {
+    const tileGroup = new THREE.Group();
+
+    tileGroup.position.x = col - currentSize / 2 + 0.5;
+    tileGroup.position.z = row - currentSize / 2 + 0.5;
+    tileGroup.position.y = level * 0.35;
+
+    const visibleTile = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 0.35, 1),
+      [
+        materials.tileSide,
+        materials.tileSide,
+        materials.tileTop,
+        materials.tileSide,
+        materials.tileSide,
+        materials.tileSide
+      ]
+    );
+
+    visibleTile.position.y = 0;
+    visibleTile.castShadow = true;
+    visibleTile.receiveShadow = true;
+
+    const clickTile = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    clickTile.rotation.x = -Math.PI / 2;
+    clickTile.position.y = 0.19;
+
+    clickTile.userData.isTile = true;
+    clickTile.userData.row = row;
+    clickTile.userData.col = col;
+    clickTile.userData.level = level;
+    clickTile.userData.coordKey = coordKey(row, col);
+    clickTile.userData.tileId = `${row}-${col}-${level}`;
+    clickTile.userData.tileGroup = tileGroup;
+    clickTile.userData.visibleTile = visibleTile;
+    clickTile.userData.removed = false;
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xf0dfb8,
+      transparent: true,
+      opacity: 0.58
+    });
+
+    const lineY = 0.196;
+
+    const topLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-0.5, lineY, -0.5),
+        new THREE.Vector3(0.5, lineY, -0.5)
+      ]),
+      lineMaterial
+    );
+
+    const bottomLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-0.5, lineY, 0.5),
+        new THREE.Vector3(0.5, lineY, 0.5)
+      ]),
+      lineMaterial
+    );
+
+    const leftLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-0.5, lineY, -0.5),
+        new THREE.Vector3(-0.5, lineY, 0.5)
+      ]),
+      lineMaterial
+    );
+
+    const rightLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0.5, lineY, -0.5),
+        new THREE.Vector3(0.5, lineY, 0.5)
+      ]),
+      lineMaterial
+    );
+
+    const outerGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.08, 1.08),
+      new THREE.MeshBasicMaterial({
+        color: 0xffdf8a,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    outerGlow.rotation.x = -Math.PI / 2;
+    outerGlow.position.y = 0.205;
+
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.9, 0.9),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff1b8,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = 0.215;
+
+    const redGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.08, 1.08),
+      new THREE.MeshBasicMaterial({
+        color: 0xff4b4b,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    redGlow.rotation.x = -Math.PI / 2;
+    redGlow.position.y = 0.225;
+
+    const greenGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.08, 1.08),
+      new THREE.MeshBasicMaterial({
+        color: 0x7dff8a,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    greenGlow.rotation.x = -Math.PI / 2;
+    greenGlow.position.y = 0.23;
+
+    const border = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
+      new THREE.LineBasicMaterial({
+        color: 0xfff1b8,
+        transparent: true,
+        opacity: 0
+      })
+    );
+
+    border.rotation.x = -Math.PI / 2;
+    border.position.y = 0.24;
+
+    const raisedHighlight = new THREE.Mesh(
+      new THREE.BoxGeometry(0.78, 0.045, 0.78),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff4c7,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      })
+    );
+
+    raisedHighlight.position.y = 0.215;
+
+    clickTile.userData.outerGlow = outerGlow;
+    clickTile.userData.glow = glow;
+    clickTile.userData.redGlow = redGlow;
+    clickTile.userData.greenGlow = greenGlow;
+    clickTile.userData.border = border;
+    clickTile.userData.raisedHighlight = raisedHighlight;
+    clickTile.userData.tileLines = [topLine, bottomLine, leftLine, rightLine];
+
+    tileGroup.add(visibleTile);
+    tileGroup.add(clickTile);
+    tileGroup.add(topLine);
+    tileGroup.add(bottomLine);
+    tileGroup.add(leftLine);
+    tileGroup.add(rightLine);
+    tileGroup.add(outerGlow);
+    tileGroup.add(glow);
+    tileGroup.add(redGlow);
+    tileGroup.add(greenGlow);
+    tileGroup.add(border);
+    tileGroup.add(raisedHighlight);
+
+    tileMeshes.push(clickTile);
+    registerTile(clickTile);
+
+    return clickTile;
   }
 
   function createPlatform(size) {
@@ -523,10 +860,11 @@ document.addEventListener("DOMContentLoaded", () => {
     currentSize = size;
     selectedSquare = null;
     tileMeshes = [];
+    tileStacks = {};
     plantedItems = {};
-    tileWaitingForRemoval = null;
     removedTileIds = [];
     removeSelectedTiles = [];
+    addedThisDrag = [];
 
     if (removePopup) removePopup.classList.remove("open");
 
@@ -534,191 +872,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
-        const tileGroup = new THREE.Group();
-
-        tileGroup.position.x = col - size / 2 + 0.5;
-        tileGroup.position.z = row - size / 2 + 0.5;
-        tileGroup.position.y = 0;
-
-        const visibleTile = new THREE.Mesh(
-          new THREE.BoxGeometry(1, 0.35, 1),
-          [
-            materials.tileSide,
-            materials.tileSide,
-            materials.tileTop,
-            materials.tileSide,
-            materials.tileSide,
-            materials.tileSide
-          ]
-        );
-
-        visibleTile.position.y = 0;
-        visibleTile.castShadow = true;
-        visibleTile.receiveShadow = true;
-
-        const clickTile = new THREE.Mesh(
-          new THREE.PlaneGeometry(1, 1),
-          new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        clickTile.rotation.x = -Math.PI / 2;
-        clickTile.position.y = 0.19;
-        clickTile.userData.isTile = true;
-        clickTile.userData.tileId = `${row}-${col}`;
-        clickTile.userData.tileGroup = tileGroup;
-        clickTile.userData.visibleTile = visibleTile;
-        clickTile.userData.removed = false;
-
-        const lineMaterial = new THREE.LineBasicMaterial({
-          color: 0xf0dfb8,
-          transparent: true,
-          opacity: 0.58
-        });
-
-        const lineY = 0.196;
-
-        const topLine = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(-0.5, lineY, -0.5),
-            new THREE.Vector3(0.5, lineY, -0.5)
-          ]),
-          lineMaterial
-        );
-
-        const bottomLine = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(-0.5, lineY, 0.5),
-            new THREE.Vector3(0.5, lineY, 0.5)
-          ]),
-          lineMaterial
-        );
-
-        const leftLine = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(-0.5, lineY, -0.5),
-            new THREE.Vector3(-0.5, lineY, 0.5)
-          ]),
-          lineMaterial
-        );
-
-        const rightLine = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0.5, lineY, -0.5),
-            new THREE.Vector3(0.5, lineY, 0.5)
-          ]),
-          lineMaterial
-        );
-
-        const outerGlow = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.08, 1.08),
-          new THREE.MeshBasicMaterial({
-            color: 0xffdf8a,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        outerGlow.rotation.x = -Math.PI / 2;
-        outerGlow.position.y = 0.205;
-
-        const glow = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.9, 0.9),
-          new THREE.MeshBasicMaterial({
-            color: 0xfff1b8,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        glow.rotation.x = -Math.PI / 2;
-        glow.position.y = 0.215;
-
-        const redGlow = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.08, 1.08),
-          new THREE.MeshBasicMaterial({
-            color: 0xff4b4b,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        redGlow.rotation.x = -Math.PI / 2;
-        redGlow.position.y = 0.225;
-
-        const greenGlow = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.08, 1.08),
-          new THREE.MeshBasicMaterial({
-            color: 0x7dff8a,
-            transparent: true,
-            opacity: 0,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          })
-        );
-
-        greenGlow.rotation.x = -Math.PI / 2;
-        greenGlow.position.y = 0.23;
-
-        const border = new THREE.LineSegments(
-          new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
-          new THREE.LineBasicMaterial({
-            color: 0xfff1b8,
-            transparent: true,
-            opacity: 0
-          })
-        );
-
-        border.rotation.x = -Math.PI / 2;
-        border.position.y = 0.24;
-
-        const raisedHighlight = new THREE.Mesh(
-          new THREE.BoxGeometry(0.78, 0.045, 0.78),
-          new THREE.MeshBasicMaterial({
-            color: 0xfff4c7,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false
-          })
-        );
-
-        raisedHighlight.position.y = 0.215;
-
-        clickTile.userData.outerGlow = outerGlow;
-        clickTile.userData.glow = glow;
-        clickTile.userData.redGlow = redGlow;
-        clickTile.userData.greenGlow = greenGlow;
-        clickTile.userData.border = border;
-        clickTile.userData.raisedHighlight = raisedHighlight;
-        clickTile.userData.tileLines = [topLine, bottomLine, leftLine, rightLine];
-
-        tileGroup.add(visibleTile);
-        tileGroup.add(clickTile);
-        tileGroup.add(topLine);
-        tileGroup.add(bottomLine);
-        tileGroup.add(leftLine);
-        tileGroup.add(rightLine);
-        tileGroup.add(outerGlow);
-        tileGroup.add(glow);
-        tileGroup.add(redGlow);
-        tileGroup.add(greenGlow);
-        tileGroup.add(border);
-        tileGroup.add(raisedHighlight);
-
-        tileMeshes.push(clickTile);
-        platformGroup.add(tileGroup);
+        const tile = createTile(row, col, 0);
+        platformGroup.add(tile.userData.tileGroup);
       }
     }
+
+    addPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(size + 14, size + 14),
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    addPlane.rotation.x = -Math.PI / 2;
+    addPlane.position.y = 0.23;
+    platformGroup.add(addPlane);
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
@@ -755,19 +926,24 @@ document.addEventListener("DOMContentLoaded", () => {
   let didDrag = false;
   let previousX = 0;
   let previousY = 0;
-  let removeMouseDown = false;
 
   container.addEventListener("mousedown", (e) => {
     didDrag = false;
 
     if (selectedTool === "remove") {
-      removeMouseDown = true;
       removeDragActive = true;
       clearRemoveSelection();
 
       const tile = getTileFromMouseEvent(e);
       addTileToRemoveSelection(tile);
 
+      return;
+    }
+
+    if (selectedTool === "add") {
+      addDragActive = true;
+      addedThisDrag = [];
+      addFromMouseEvent(e);
       return;
     }
 
@@ -785,6 +961,12 @@ document.addEventListener("DOMContentLoaded", () => {
         addTileToRemoveSelection(tile);
       }
 
+      return;
+    }
+
+    if (addDragActive && selectedTool === "add") {
+      didDrag = true;
+      addFromMouseEvent(e);
       return;
     }
 
@@ -821,13 +1003,17 @@ document.addEventListener("DOMContentLoaded", () => {
           const tileId = plantHits[0].object.userData.tileId;
           clearRemoveSelection();
           removePlantByTileId(tileId);
-          removeMouseDown = false;
           return;
         }
       }
 
       openRemoveTilesPopup();
-      removeMouseDown = false;
+      return;
+    }
+
+    if (addDragActive && selectedTool === "add") {
+      addDragActive = false;
+      addedThisDrag = [];
       return;
     }
 
@@ -836,25 +1022,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   container.addEventListener("click", (e) => {
     if (selectedTool === "remove") return;
+    if (selectedTool === "add") return;
     if (didDrag) return;
 
     updateMouseFromEvent(e);
-
     raycaster.setFromCamera(mouse, camera);
 
-    const hits = raycaster.intersectObjects(tileMeshes);
+    const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
+    const hits = raycaster.intersectObjects(visibleTiles);
 
     if (hits.length > 0) {
       const clickedTile = hits[0].object;
-
-      if (selectedTool === "add") {
-        if (clickedTile.userData.removed) {
-          restoreTile(clickedTile);
-        }
-        return;
-      }
-
-      if (clickedTile.userData.removed) return;
 
       setSelectedSquare(clickedTile);
 
@@ -879,12 +1057,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (removeSelectedTiles.length === 0) return;
 
       removeSelectedTiles.forEach((tile) => {
-        const tileId = tile.userData.tileId;
-
-        if (!removedTileIds.includes(tileId)) {
-          removedTileIds.push(tileId);
-        }
-
         hideTile(tile);
 
         if (selectedSquare === tile) {
@@ -893,7 +1065,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       removeSelectedTiles = [];
-      tileWaitingForRemoval = null;
 
       if (removePopup) {
         removePopup.classList.remove("open");
@@ -924,6 +1095,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    const tiles = tileMeshes.map((tile) => {
+      return {
+        tileId: tile.userData.tileId,
+        row: tile.userData.row,
+        col: tile.userData.col,
+        level: tile.userData.level,
+        removed: tile.userData.removed
+      };
+    });
+
     const saveData = {
       id: Date.now(),
       name: name,
@@ -934,6 +1115,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       cameraZ: camera.position.z,
       removedTiles: [...removedTileIds],
+      tiles: tiles,
       plants: plants
     };
 
@@ -945,20 +1127,40 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadGarden(saveData) {
     createPlatform(saveData.gridSize);
 
+    if (saveData.tiles) {
+      tileMeshes.forEach((tile) => {
+        platform.remove(tile.userData.tileGroup);
+      });
+
+      tileMeshes = [];
+      tileStacks = {};
+      plantedItems = {};
+      removedTileIds = [];
+
+      saveData.tiles.forEach((tileData) => {
+        const tile = createTile(tileData.row, tileData.col, tileData.level);
+        platform.add(tile.userData.tileGroup);
+
+        if (tileData.removed) {
+          hideTile(tile);
+        }
+      });
+    } else {
+      removedTileIds = [...saveData.removedTiles];
+
+      removedTileIds.forEach((tileId) => {
+        const tile = tileMeshes.find((item) => item.userData.tileId === tileId);
+
+        if (tile) {
+          hideTile(tile);
+        }
+      });
+    }
+
     platform.rotation.x = saveData.platformRotation.x;
     platform.rotation.y = saveData.platformRotation.y;
     camera.position.z = saveData.cameraZ;
     camera.lookAt(0, 0, 0);
-
-    removedTileIds = [...saveData.removedTiles];
-
-    removedTileIds.forEach((tileId) => {
-      const tile = tileMeshes.find((item) => item.userData.tileId === tileId);
-
-      if (tile) {
-        hideTile(tile);
-      }
-    });
 
     saveData.plants.forEach((plantData) => {
       const tile = tileMeshes.find((item) => item.userData.tileId === plantData.tileId);
