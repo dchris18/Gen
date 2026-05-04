@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedTool = "remove";
         if (plantMenu) plantMenu.classList.remove("open");
       } else {
-        selectedTool = "trowel";
+        selectedTool = "add";
         if (plantMenu) plantMenu.classList.remove("open");
       }
     });
@@ -379,6 +379,11 @@ document.addEventListener("DOMContentLoaded", () => {
     tile.userData.outerGlow.material.opacity = 0;
     tile.userData.glow.material.opacity = 0;
     tile.userData.redGlow.material.opacity = 0;
+
+    if (tile.userData.greenGlow) {
+      tile.userData.greenGlow.material.opacity = 0;
+    }
+
     tile.userData.border.material.opacity = 0;
     tile.userData.raisedHighlight.material.opacity = 0;
     tile.userData.border.material.color.set(0xfff1b8);
@@ -448,6 +453,44 @@ document.addEventListener("DOMContentLoaded", () => {
       clearTileHighlight(tile);
       if (selectedSquare === tile) selectedSquare = null;
     }, 180);
+  }
+
+  function hideTile(tile) {
+    const tileId = tile.userData.tileId;
+
+    removePlantFromSquare(tile);
+
+    tile.userData.removed = true;
+    tile.userData.visibleTile.visible = false;
+
+    tile.userData.tileLines.forEach((line) => {
+      line.visible = false;
+    });
+
+    clearTileHighlight(tile);
+    plantedItems[tileId] = null;
+  }
+
+  function restoreTile(tile) {
+    const tileId = tile.userData.tileId;
+
+    tile.userData.removed = false;
+    tile.userData.visibleTile.visible = true;
+
+    tile.userData.tileLines.forEach((line) => {
+      line.visible = true;
+    });
+
+    removedTileIds = removedTileIds.filter((id) => id !== tileId);
+
+    tile.userData.greenGlow.material.opacity = 0.65;
+    tile.userData.border.material.opacity = 1;
+    tile.userData.raisedHighlight.material.opacity = 0.18;
+    tile.userData.border.material.color.set(0x7dff8a);
+
+    setTimeout(() => {
+      clearTileHighlight(tile);
+    }, 220);
   }
 
   function updateMouseFromEvent(e) {
@@ -613,6 +656,20 @@ document.addEventListener("DOMContentLoaded", () => {
         redGlow.rotation.x = -Math.PI / 2;
         redGlow.position.y = 0.225;
 
+        const greenGlow = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.08, 1.08),
+          new THREE.MeshBasicMaterial({
+            color: 0x7dff8a,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          })
+        );
+
+        greenGlow.rotation.x = -Math.PI / 2;
+        greenGlow.position.y = 0.23;
+
         const border = new THREE.LineSegments(
           new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
           new THREE.LineBasicMaterial({
@@ -640,8 +697,10 @@ document.addEventListener("DOMContentLoaded", () => {
         clickTile.userData.outerGlow = outerGlow;
         clickTile.userData.glow = glow;
         clickTile.userData.redGlow = redGlow;
+        clickTile.userData.greenGlow = greenGlow;
         clickTile.userData.border = border;
         clickTile.userData.raisedHighlight = raisedHighlight;
+        clickTile.userData.tileLines = [topLine, bottomLine, leftLine, rightLine];
 
         tileGroup.add(visibleTile);
         tileGroup.add(clickTile);
@@ -652,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tileGroup.add(outerGlow);
         tileGroup.add(glow);
         tileGroup.add(redGlow);
+        tileGroup.add(greenGlow);
         tileGroup.add(border);
         tileGroup.add(raisedHighlight);
 
@@ -787,6 +847,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hits.length > 0) {
       const clickedTile = hits[0].object;
 
+      if (selectedTool === "add") {
+        if (clickedTile.userData.removed) {
+          restoreTile(clickedTile);
+        }
+        return;
+      }
+
       if (clickedTile.userData.removed) return;
 
       setSelectedSquare(clickedTile);
@@ -818,19 +885,12 @@ document.addEventListener("DOMContentLoaded", () => {
           removedTileIds.push(tileId);
         }
 
-        removePlantFromSquare(tile);
-
-        tile.userData.removed = true;
-        tile.userData.tileGroup.visible = false;
-
-        plantedItems[tileId] = null;
+        hideTile(tile);
 
         if (selectedSquare === tile) {
           selectedSquare = null;
         }
       });
-
-      tileMeshes = tileMeshes.filter((tile) => !removeSelectedTiles.includes(tile));
 
       removeSelectedTiles = [];
       tileWaitingForRemoval = null;
@@ -896,16 +956,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const tile = tileMeshes.find((item) => item.userData.tileId === tileId);
 
       if (tile) {
-        tile.userData.removed = true;
-        tile.userData.tileGroup.visible = false;
-        tileMeshes = tileMeshes.filter((item) => item !== tile);
+        hideTile(tile);
       }
     });
 
     saveData.plants.forEach((plantData) => {
       const tile = tileMeshes.find((item) => item.userData.tileId === plantData.tileId);
 
-      if (tile) {
+      if (tile && !tile.userData.removed) {
         selectedPlant = plantData.type;
         plantOnSquare(tile);
 
@@ -919,56 +977,56 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedSquare = null;
   }
 
-function renderSavedList() {
-  const saves = getSavedGardens();
+  function renderSavedList() {
+    const saves = getSavedGardens();
 
-  if (!savedList) return;
+    if (!savedList) return;
 
-  savedList.innerHTML = "";
+    savedList.innerHTML = "";
 
-  if (saves.length === 0) {
-    savedList.innerHTML = `<p style="color:#7a4144; margin:0;">No saves yet.</p>`;
-    return;
-  }
+    if (saves.length === 0) {
+      savedList.innerHTML = `<p style="color:#7a4144; margin:0;">No saves yet.</p>`;
+      return;
+    }
 
-  saves.forEach((saveData) => {
-    const row = document.createElement("div");
-    row.className = "saved-row";
+    saves.forEach((saveData) => {
+      const row = document.createElement("div");
+      row.className = "saved-row";
 
-    const button = document.createElement("button");
-    button.className = "saved-item";
-    button.textContent = saveData.name;
+      const button = document.createElement("button");
+      button.className = "saved-item";
+      button.textContent = saveData.name;
 
-    button.addEventListener("click", () => {
-      loadGarden(saveData);
-      if (savedListPopup) savedListPopup.classList.remove("open");
-    });
-
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "delete-save";
-    deleteButton.textContent = "×";
-    deleteButton.setAttribute("aria-label", "Delete save");
-
-    deleteButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-
-      const wantsDelete = confirm(`Remove save "${saveData.name}"?`);
-
-      if (!wantsDelete) return;
-
-      const updatedSaves = getSavedGardens().filter((item) => {
-        return item.id !== saveData.id;
+      button.addEventListener("click", () => {
+        loadGarden(saveData);
+        if (savedListPopup) savedListPopup.classList.remove("open");
       });
 
-      setSavedGardens(updatedSaves);
-      renderSavedList();
-    });
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "delete-save";
+      deleteButton.textContent = "×";
+      deleteButton.setAttribute("aria-label", "Delete save");
 
-    row.appendChild(button);
-    row.appendChild(deleteButton);
-    savedList.appendChild(row);
-  });
-}
+      deleteButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+
+        const wantsDelete = confirm(`Remove save "${saveData.name}"?`);
+
+        if (!wantsDelete) return;
+
+        const updatedSaves = getSavedGardens().filter((item) => {
+          return item.id !== saveData.id;
+        });
+
+        setSavedGardens(updatedSaves);
+        renderSavedList();
+      });
+
+      row.appendChild(button);
+      row.appendChild(deleteButton);
+      savedList.appendChild(row);
+    });
+  }
 
   if (saveButton) {
     saveButton.addEventListener("click", () => {
