@@ -100,21 +100,81 @@ document.addEventListener("DOMContentLoaded", () => {
       color: 0x465d3e,
       roughness: 0.8
     }),
-    soil: new THREE.MeshStandardMaterial({ color: 0x7a5038, roughness: 0.88 }),
-    soilDark: new THREE.MeshStandardMaterial({ color: 0x5f3f2f, roughness: 0.92 }),
-    soilLight: new THREE.MeshStandardMaterial({ color: 0x8d6145, roughness: 0.86 }),
-    stem: new THREE.MeshStandardMaterial({ color: 0x55784b, roughness: 0.65 }),
-    stemLight: new THREE.MeshStandardMaterial({ color: 0x6f985d, roughness: 0.65 }),
-    leaf: new THREE.MeshStandardMaterial({ color: 0x6f985d, roughness: 0.6 }),
-    leafDark: new THREE.MeshStandardMaterial({ color: 0x4f7445, roughness: 0.7 }),
-    leafLight: new THREE.MeshStandardMaterial({ color: 0x92b978, roughness: 0.55 }),
-    flowerPetal: new THREE.MeshStandardMaterial({ color: 0xe8a3a8, roughness: 0.55 }),
-    flowerPetalLight: new THREE.MeshStandardMaterial({ color: 0xf2c0bd, roughness: 0.5 }),
-    flowerCenter: new THREE.MeshStandardMaterial({ color: 0xf0d77a, roughness: 0.55 }),
-    potDark: new THREE.MeshStandardMaterial({ color: 0x9b6248, roughness: 0.8 }),
-    carrot: new THREE.MeshStandardMaterial({ color: 0xde7a32, roughness: 0.65 }),
-    potato: new THREE.MeshStandardMaterial({ color: 0xb98252, roughness: 0.8 }),
-    tomato: new THREE.MeshStandardMaterial({ color: 0xd94c3d, roughness: 0.55 })
+
+    soil: new THREE.MeshStandardMaterial({
+      color: 0x7a5038,
+      roughness: 0.88,
+      flatShading: true
+    }),
+    soilDark: new THREE.MeshStandardMaterial({
+      color: 0x5f3f2f,
+      roughness: 0.92,
+      flatShading: true
+    }),
+    soilLight: new THREE.MeshStandardMaterial({
+      color: 0x8d6145,
+      roughness: 0.86,
+      flatShading: true
+    }),
+
+    stem: new THREE.MeshStandardMaterial({
+      color: 0x6b4a2f,
+      roughness: 0.72,
+      flatShading: true
+    }),
+    stemLight: new THREE.MeshStandardMaterial({
+      color: 0x8a5f37,
+      roughness: 0.7,
+      flatShading: true
+    }),
+
+    leaf: new THREE.MeshStandardMaterial({
+      color: 0x5f944a,
+      roughness: 0.66,
+      flatShading: true
+    }),
+    leafDark: new THREE.MeshStandardMaterial({
+      color: 0x3f7137,
+      roughness: 0.72,
+      flatShading: true
+    }),
+    leafLight: new THREE.MeshStandardMaterial({
+      color: 0x8fc76a,
+      roughness: 0.58,
+      flatShading: true
+    }),
+
+    flowerPetal: new THREE.MeshStandardMaterial({
+      color: 0xd98b96,
+      roughness: 0.58,
+      flatShading: true
+    }),
+    flowerPetalLight: new THREE.MeshStandardMaterial({
+      color: 0xf0b3ad,
+      roughness: 0.52,
+      flatShading: true
+    }),
+    flowerCenter: new THREE.MeshStandardMaterial({
+      color: 0xefcc58,
+      roughness: 0.55,
+      flatShading: true
+    }),
+
+    carrot: new THREE.MeshStandardMaterial({
+      color: 0xc97935,
+      roughness: 0.68,
+      flatShading: true
+    }),
+    potato: new THREE.MeshStandardMaterial({
+      color: 0xb98252,
+      roughness: 0.8,
+      flatShading: true
+    }),
+    tomato: new THREE.MeshStandardMaterial({
+      color: 0xd94c3d,
+      roughness: 0.55,
+      flatShading: true
+    })
   };
 
   if (eyeButton && gridMenu) {
@@ -182,8 +242,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  function roundedLeaf(width, height, depth, material) {
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 16), material);
+  function lowPolyLeaf(width, height, depth, material) {
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 5), material);
     leaf.scale.set(width, height, depth);
     leaf.castShadow = true;
     leaf.receiveShadow = true;
@@ -192,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function makeStem(height, radius = 0.035, material = materials.stem) {
     const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius * 0.75, radius, height, 18),
+      new THREE.CylinderGeometry(radius * 0.75, radius, height, 6),
       material
     );
 
@@ -206,21 +266,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const group = new THREE.Group();
     const rand = seededRandom(tileId + "-soil");
 
-    const patchCount = 11;
-
-    for (let i = 0; i < patchCount; i++) {
+    for (let i = 0; i < 11; i++) {
+      let material = materials.soil;
       const materialPick = rand();
 
-      let material = materials.soil;
-
-      if (materialPick > 0.72) {
-        material = materials.soilDark;
-      } else if (materialPick < 0.28) {
-        material = materials.soilLight;
-      }
+      if (materialPick > 0.72) material = materials.soilDark;
+      else if (materialPick < 0.28) material = materials.soilLight;
 
       const patch = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18 + rand() * 0.16, 0.2 + rand() * 0.18, 0.028, 18),
+        new THREE.CylinderGeometry(0.18 + rand() * 0.16, 0.2 + rand() * 0.18, 0.028, 8),
         material
       );
 
@@ -242,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const centerPatch = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.33, 0.38, 0.03, 24),
+      new THREE.CylinderGeometry(0.33, 0.38, 0.03, 8),
       materials.soilDark
     );
 
@@ -267,27 +321,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const plant = new THREE.Group();
     plant.add(makeSoilBlob(tileId));
 
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const height = 0.38 + (i % 3) * 0.06;
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 7) * Math.PI * 2;
 
-      const stem = makeStem(height, 0.024, materials.stemLight);
-      stem.position.set(Math.cos(angle) * 0.12, 0.25, Math.sin(angle) * 0.12);
-      stem.rotation.z = Math.cos(angle) * 0.36;
-      stem.rotation.x = Math.sin(angle) * -0.36;
+      const stem = makeStem(0.34 + (i % 2) * 0.08, 0.024, materials.stemLight);
+      stem.position.set(Math.cos(angle) * 0.1, 0.25, Math.sin(angle) * 0.1);
+      stem.rotation.z = Math.cos(angle) * 0.35;
+      stem.rotation.x = Math.sin(angle) * -0.35;
       plant.add(stem);
 
-      const leaf = roundedLeaf(
-        i % 2 === 0 ? 1.0 : 0.82,
-        0.2,
-        0.46,
+      const leaf = lowPolyLeaf(
+        i % 2 === 0 ? 1.05 : 0.82,
+        0.18,
+        0.42,
         i % 2 === 0 ? materials.leafLight : materials.leaf
       );
 
       leaf.position.set(
-        Math.cos(angle) * 0.24,
-        0.54 + (i % 3) * 0.055,
-        Math.sin(angle) * 0.24
+        Math.cos(angle) * 0.23,
+        0.52 + (i % 3) * 0.04,
+        Math.sin(angle) * 0.23
       );
 
       leaf.rotation.z = angle;
@@ -296,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
       plant.add(leaf);
     }
 
-    plant.scale.set(0.76, 0.76, 0.76);
+    plant.scale.set(0.72, 0.72, 0.72);
     return plant;
   }
 
@@ -304,42 +357,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const plant = new THREE.Group();
     plant.add(makeSoilBlob(tileId));
 
-    for (let i = 0; i < 13; i++) {
-      const angle = (i / 13) * Math.PI * 2;
-      const height = i % 2 === 0 ? 0.54 : 0.44;
+    for (let i = 0; i < 11; i++) {
+      const angle = (i / 11) * Math.PI * 2;
 
-      const stem = makeStem(height, 0.02, materials.stemLight);
-      stem.position.set(Math.cos(angle) * 0.055, 0.25, Math.sin(angle) * 0.055);
-      stem.rotation.z = Math.cos(angle) * 0.64;
-      stem.rotation.x = Math.sin(angle) * -0.64;
+      const stem = makeStem(0.42 + (i % 2) * 0.08, 0.02, materials.stemLight);
+      stem.position.set(Math.cos(angle) * 0.05, 0.25, Math.sin(angle) * 0.05);
+      stem.rotation.z = Math.cos(angle) * 0.6;
+      stem.rotation.x = Math.sin(angle) * -0.6;
       plant.add(stem);
 
-      const frond = new THREE.Group();
-      frond.position.set(
-        Math.cos(angle) * 0.22,
-        0.52 + (i % 2) * 0.035,
-        Math.sin(angle) * 0.22
+      const frond = lowPolyLeaf(
+        1.25,
+        0.12,
+        0.32,
+        i % 2 === 0 ? materials.leafLight : materials.leaf
       );
+
+      frond.position.set(
+        Math.cos(angle) * 0.24,
+        0.52 + (i % 2) * 0.04,
+        Math.sin(angle) * 0.24
+      );
+
       frond.rotation.y = -angle;
-
-      for (let j = 0; j < 4; j++) {
-        const miniLeafLeft = roundedLeaf(0.38, 0.085, 0.19, materials.leafLight);
-        miniLeafLeft.position.set(-0.05 * j, 0.018 * j, 0.045 + j * 0.022);
-        miniLeafLeft.rotation.z = 0.45;
-        frond.add(miniLeafLeft);
-
-        const miniLeafRight = roundedLeaf(0.38, 0.085, 0.19, materials.leaf);
-        miniLeafRight.position.set(0.05 * j, 0.018 * j, -0.045 - j * 0.022);
-        miniLeafRight.rotation.z = -0.45;
-        frond.add(miniLeafRight);
-      }
-
-      frond.rotation.x = Math.sin(angle) * 0.4;
-      frond.rotation.z = Math.cos(angle) * 0.26;
+      frond.rotation.z = Math.cos(angle) * 0.4;
+      frond.rotation.x = Math.sin(angle) * 0.55;
       plant.add(frond);
     }
 
-    plant.scale.set(0.68, 0.68, 0.68);
+    plant.scale.set(0.7, 0.7, 0.7);
     return plant;
   }
 
@@ -349,63 +395,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let s = 0; s < 4; s++) {
       const angle = (s / 4) * Math.PI * 2;
-      const stemHeight = s === 0 ? 0.62 : 0.46 + (s % 2) * 0.06;
+      const stemHeight = s === 0 ? 0.6 : 0.42;
 
       const stem = makeStem(stemHeight, 0.024, materials.stem);
       stem.position.set(Math.cos(angle) * 0.1, 0.25, Math.sin(angle) * 0.1);
-      stem.rotation.z = Math.cos(angle) * 0.3;
-      stem.rotation.x = Math.sin(angle) * -0.3;
+      stem.rotation.z = Math.cos(angle) * 0.28;
+      stem.rotation.x = Math.sin(angle) * -0.28;
       plant.add(stem);
 
       const flowerGroup = new THREE.Group();
+
       flowerGroup.position.set(
-        Math.cos(angle) * 0.18,
-        0.7 + (s === 0 ? 0.08 : 0),
-        Math.sin(angle) * 0.18
+        Math.cos(angle) * 0.17,
+        0.68 + (s === 0 ? 0.08 : 0),
+        Math.sin(angle) * 0.17
       );
 
-      for (let i = 0; i < 8; i++) {
-        const petalAngle = (i / 8) * Math.PI * 2;
+      for (let i = 0; i < 7; i++) {
+        const petalAngle = (i / 7) * Math.PI * 2;
 
-        const petal = new THREE.Mesh(
-          new THREE.SphereGeometry(0.115, 20, 14),
+        const petal = lowPolyLeaf(
+          0.72,
+          0.18,
+          0.38,
           i % 2 === 0 ? materials.flowerPetal : materials.flowerPetalLight
         );
 
         petal.position.set(
-          Math.cos(petalAngle) * 0.12,
-          Math.sin(petalAngle) * 0.018,
-          Math.sin(petalAngle) * 0.12
+          Math.cos(petalAngle) * 0.11,
+          0,
+          Math.sin(petalAngle) * 0.11
         );
 
-        petal.scale.set(1.1, 0.4, 0.72);
         petal.rotation.y = petalAngle;
-        petal.castShadow = true;
+        petal.rotation.z = 0.25;
         flowerGroup.add(petal);
       }
 
       const center = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 20, 14),
+        new THREE.SphereGeometry(0.075, 7, 5),
         materials.flowerCenter
       );
 
       center.castShadow = true;
       flowerGroup.add(center);
-
-      flowerGroup.rotation.x = 0.2;
+      flowerGroup.rotation.x = 0.25;
       plant.add(flowerGroup);
 
-      const leaf = roundedLeaf(0.82, 0.16, 0.36, s % 2 === 0 ? materials.leaf : materials.leafLight);
+      const leaf = lowPolyLeaf(0.78, 0.14, 0.34, materials.leafLight);
       leaf.position.set(
         Math.cos(angle + 0.7) * 0.22,
-        0.44,
+        0.42,
         Math.sin(angle + 0.7) * 0.22
       );
       leaf.rotation.z = angle;
       plant.add(leaf);
     }
 
-    plant.scale.set(0.72, 0.72, 0.72);
+    plant.scale.set(0.7, 0.7, 0.7);
     return plant;
   }
 
@@ -417,11 +464,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const x = -0.22 + i * 0.15;
 
       const carrotTop = new THREE.Mesh(
-        new THREE.ConeGeometry(0.065, 0.24, 18),
+        new THREE.ConeGeometry(0.06, 0.24, 6),
         materials.carrot
       );
 
-      carrotTop.position.set(x, 0.32, 0.05 * (i % 2));
+      carrotTop.position.set(x, 0.33, 0.04 * (i % 2));
       carrotTop.rotation.x = Math.PI;
       carrotTop.castShadow = true;
       plant.add(carrotTop);
@@ -429,10 +476,10 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let j = 0; j < 4; j++) {
         const angle = (j / 4) * Math.PI * 2;
 
-        const leaf = roundedLeaf(0.55, 0.1, 0.22, materials.leafLight);
+        const leaf = lowPolyLeaf(0.55, 0.08, 0.2, materials.leafLight);
         leaf.position.set(
           x + Math.cos(angle) * 0.07,
-          0.5 + j * 0.022,
+          0.5 + j * 0.02,
           Math.sin(angle) * 0.07
         );
         leaf.rotation.z = angle;
@@ -441,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    plant.scale.set(0.76, 0.76, 0.76);
+    plant.scale.set(0.74, 0.74, 0.74);
     return plant;
   }
 
@@ -453,15 +500,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const angle = (i / 5) * Math.PI * 2;
 
       const potato = new THREE.Mesh(
-        new THREE.SphereGeometry(0.11, 20, 14),
+        new THREE.SphereGeometry(0.11, 7, 5),
         materials.potato
       );
-      potato.position.set(Math.cos(angle) * 0.23, 0.32, Math.sin(angle) * 0.18);
+
+      potato.position.set(Math.cos(angle) * 0.22, 0.32, Math.sin(angle) * 0.17);
       potato.scale.set(1.2, 0.62, 0.9);
       potato.castShadow = true;
       plant.add(potato);
 
-      const leaf = roundedLeaf(0.88, 0.17, 0.38, i % 2 === 0 ? materials.leafDark : materials.leaf);
+      const leaf = lowPolyLeaf(
+        0.86,
+        0.15,
+        0.34,
+        i % 2 === 0 ? materials.leafDark : materials.leaf
+      );
+
       leaf.position.set(Math.cos(angle) * 0.18, 0.52, Math.sin(angle) * 0.18);
       leaf.rotation.z = angle;
       leaf.rotation.x = Math.sin(angle) * 0.5;
@@ -469,7 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
       plant.add(leaf);
     }
 
-    plant.scale.set(0.76, 0.76, 0.76);
+    plant.scale.set(0.74, 0.74, 0.74);
     return plant;
   }
 
@@ -480,28 +534,32 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 0; i < 5; i++) {
       const angle = (i / 5) * Math.PI * 2;
 
-      const stem = makeStem(0.5, 0.022, materials.stemLight);
+      const stem = makeStem(0.48, 0.022, materials.stemLight);
       stem.position.set(Math.cos(angle) * 0.11, 0.25, Math.sin(angle) * 0.11);
       stem.rotation.z = Math.cos(angle) * 0.42;
       stem.rotation.x = Math.sin(angle) * -0.42;
       plant.add(stem);
 
       const tomato = new THREE.Mesh(
-        new THREE.SphereGeometry(0.095, 22, 16),
+        new THREE.SphereGeometry(0.09, 8, 6),
         materials.tomato
       );
 
-      tomato.position.set(Math.cos(angle) * 0.23, 0.57, Math.sin(angle) * 0.23);
+      tomato.position.set(Math.cos(angle) * 0.22, 0.56, Math.sin(angle) * 0.22);
       tomato.castShadow = true;
       plant.add(tomato);
 
-      const leaf = roundedLeaf(0.76, 0.16, 0.32, materials.leafLight);
-      leaf.position.set(Math.cos(angle + 0.4) * 0.22, 0.66, Math.sin(angle + 0.4) * 0.22);
+      const leaf = lowPolyLeaf(0.72, 0.14, 0.3, materials.leafLight);
+      leaf.position.set(
+        Math.cos(angle + 0.4) * 0.21,
+        0.64,
+        Math.sin(angle + 0.4) * 0.21
+      );
       leaf.rotation.z = angle;
       plant.add(leaf);
     }
 
-    plant.scale.set(0.74, 0.74, 0.74);
+    plant.scale.set(0.72, 0.72, 0.72);
     return plant;
   }
 
