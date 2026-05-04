@@ -34,6 +34,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedTool = null;
   let platform;
   let addPlane;
+  let addPreview;
+
   let currentSize = 6;
   let selectedSquare = null;
 
@@ -42,11 +44,18 @@ document.addEventListener("DOMContentLoaded", () => {
   let plantedItems = {};
   let removedTileIds = [];
 
-  let removeDragActive = false;
   let removeSelectedTiles = [];
 
-  let addDragActive = false;
-  let addedThisDrag = [];
+  let dragging = false;
+  let didDrag = false;
+  let previousX = 0;
+  let previousY = 0;
+
+  let toolPointerDown = false;
+  let toolStartX = 0;
+  let toolStartY = 0;
+
+  const TOOL_DRAG_DISTANCE = 8;
 
   let savedRotation = { x: 0.55, y: -0.75 };
 
@@ -128,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (button.classList.contains("tool-shears")) {
         selectedTool = "remove";
         if (plantMenu) plantMenu.classList.remove("open");
+        if (addPreview) addPreview.visible = false;
       } else {
         selectedTool = "add";
         if (plantMenu) plantMenu.classList.remove("open");
@@ -149,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedPlant = card.dataset.plant;
       selectedTool = "plant";
 
+      if (addPreview) addPreview.visible = false;
       if (plantMenu) plantMenu.classList.remove("open");
 
       if (selectedSquare && !selectedSquare.userData.removed) {
@@ -361,15 +372,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tileStacks[key].sort((a, b) => a.userData.level - b.userData.level);
   }
 
-  function getTopVisibleTile(row, col) {
-    const stack = tileStacks[coordKey(row, col)] || [];
-    const visibleTiles = stack.filter((tile) => !tile.userData.removed);
-
-    if (visibleTiles.length === 0) return null;
-
-    return visibleTiles.sort((a, b) => b.userData.level - a.userData.level)[0];
-  }
-
   function getTopLevel(row, col) {
     const stack = tileStacks[coordKey(row, col)] || [];
 
@@ -542,6 +544,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 220);
   }
 
+  function createAddPreview() {
+    const previewGroup = new THREE.Group();
+
+    const outline = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(1, 1)),
+      new THREE.LineBasicMaterial({
+        color: 0x7dff8a,
+        transparent: true,
+        opacity: 0.95
+      })
+    );
+
+    outline.rotation.x = -Math.PI / 2;
+    outline.position.y = 0.255;
+
+    previewGroup.add(outline);
+    previewGroup.visible = false;
+
+    return previewGroup;
+  }
+
+  function updateAddPreview(e) {
+    if (selectedTool !== "add" || !platform || !addPreview) {
+      if (addPreview) addPreview.visible = false;
+      return;
+    }
+
+    const coord = getAddCoordFromMouseEvent(e);
+
+    if (!coord || !canAddAtCoord(coord.row, coord.col)) {
+      addPreview.visible = false;
+      return;
+    }
+
+    const nextLevel = getTopLevel(coord.row, coord.col) + 1;
+
+    addPreview.position.set(
+      coord.col - currentSize / 2 + 0.5,
+      nextLevel * 0.35,
+      coord.row - currentSize / 2 + 0.5
+    );
+
+    addPreview.visible = true;
+  }
+
   function updateMouseFromEvent(e) {
     const rect = renderer.domElement.getBoundingClientRect();
 
@@ -580,8 +627,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return {
         row: tile.userData.row,
-        col: tile.userData.col,
-        directTile: tile
+        col: tile.userData.col
       };
     }
 
@@ -596,11 +642,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const col = Math.floor(localPoint.x + currentSize / 2);
     const row = Math.floor(localPoint.y + currentSize / 2);
 
-    return {
-      row,
-      col,
-      directTile: null
-    };
+    return { row, col };
   }
 
   function canAddAtCoord(row, col) {
@@ -646,15 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!coord) return;
 
-    const key = `${coord.row}-${coord.col}`;
-
-    if (addedThisDrag.includes(key)) return;
-
-    const addedTile = addTileAtCoord(coord.row, coord.col);
-
-    if (addedTile) {
-      addedThisDrag.push(key);
-    }
+    addTileAtCoord(coord.row, coord.col);
   }
 
   function createTile(row, col, level) {
@@ -676,7 +710,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ]
     );
 
-    visibleTile.position.y = 0;
     visibleTile.castShadow = true;
     visibleTile.receiveShadow = true;
 
@@ -864,7 +897,6 @@ document.addEventListener("DOMContentLoaded", () => {
     plantedItems = {};
     removedTileIds = [];
     removeSelectedTiles = [];
-    addedThisDrag = [];
 
     if (removePopup) removePopup.classList.remove("open");
 
@@ -890,6 +922,9 @@ document.addEventListener("DOMContentLoaded", () => {
     addPlane.rotation.x = -Math.PI / 2;
     addPlane.position.y = 0.23;
     platformGroup.add(addPlane);
+
+    addPreview = createAddPreview();
+    platformGroup.add(addPreview);
 
     platformGroup.rotation.x = savedRotation.x;
     platformGroup.rotation.y = savedRotation.y;
@@ -922,28 +957,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  let dragging = false;
-  let didDrag = false;
-  let previousX = 0;
-  let previousY = 0;
-
   container.addEventListener("mousedown", (e) => {
     didDrag = false;
 
-    if (selectedTool === "remove") {
-      removeDragActive = true;
-      clearRemoveSelection();
+    if (selectedTool === "add" || selectedTool === "remove") {
+      toolPointerDown = true;
+      toolStartX = e.clientX;
+      toolStartY = e.clientY;
 
-      const tile = getTileFromMouseEvent(e);
-      addTileToRemoveSelection(tile);
+      dragging = true;
+      previousX = e.clientX;
+      previousY = e.clientY;
 
-      return;
-    }
-
-    if (selectedTool === "add") {
-      addDragActive = true;
-      addedThisDrag = [];
-      addFromMouseEvent(e);
       return;
     }
 
@@ -953,20 +978,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.addEventListener("mousemove", (e) => {
-    if (removeDragActive && selectedTool === "remove") {
-      const tile = getTileFromMouseEvent(e);
-
-      if (tile) {
-        didDrag = true;
-        addTileToRemoveSelection(tile);
-      }
-
-      return;
+    if (selectedTool === "add" && !toolPointerDown) {
+      updateAddPreview(e);
     }
 
-    if (addDragActive && selectedTool === "add") {
-      didDrag = true;
-      addFromMouseEvent(e);
+    if (toolPointerDown && (selectedTool === "add" || selectedTool === "remove")) {
+      const totalMoveX = e.clientX - toolStartX;
+      const totalMoveY = e.clientY - toolStartY;
+      const distance = Math.hypot(totalMoveX, totalMoveY);
+
+      const moveX = e.clientX - previousX;
+      const moveY = e.clientY - previousY;
+
+      if (distance > TOOL_DRAG_DISTANCE) {
+        didDrag = true;
+
+        platform.rotation.y += moveX * 0.01;
+        platform.rotation.x += moveY * 0.01;
+        platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
+
+        updateAddPreview(e);
+      }
+
+      previousX = e.clientX;
+      previousY = e.clientY;
       return;
     }
 
@@ -986,8 +1021,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.addEventListener("mouseup", (e) => {
-    if (removeDragActive && selectedTool === "remove") {
-      removeDragActive = false;
+    if (toolPointerDown && selectedTool === "add") {
+      toolPointerDown = false;
+      dragging = false;
+
+      if (!didDrag) {
+        addFromMouseEvent(e);
+        updateAddPreview(e);
+      }
+
+      return;
+    }
+
+    if (toolPointerDown && selectedTool === "remove") {
+      toolPointerDown = false;
+      dragging = false;
 
       if (!didDrag) {
         updateMouseFromEvent(e);
@@ -1005,15 +1053,16 @@ document.addEventListener("DOMContentLoaded", () => {
           removePlantByTileId(tileId);
           return;
         }
+
+        const tile = getTileFromMouseEvent(e);
+
+        if (tile) {
+          clearRemoveSelection();
+          addTileToRemoveSelection(tile);
+          openRemoveTilesPopup();
+        }
       }
 
-      openRemoveTilesPopup();
-      return;
-    }
-
-    if (addDragActive && selectedTool === "add") {
-      addDragActive = false;
-      addedThisDrag = [];
       return;
     }
 
@@ -1284,14 +1333,14 @@ document.addEventListener("DOMContentLoaded", () => {
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
 
-    camera.position.z += e.deltaY * 0.045;
+    camera.position.z += e.deltaY * 0.065;
 
     if (currentSize === 3) {
-      camera.position.z = Math.max(3, Math.min(10, camera.position.z));
+      camera.position.z = Math.max(2.2, Math.min(18, camera.position.z));
     } else if (currentSize === 6) {
-      camera.position.z = Math.max(4, Math.min(15, camera.position.z));
+      camera.position.z = Math.max(2.8, Math.min(24, camera.position.z));
     } else {
-      camera.position.z = Math.max(5, Math.min(20, camera.position.z));
+      camera.position.z = Math.max(3.5, Math.min(30, camera.position.z));
     }
 
     camera.lookAt(0, 0, 0);
