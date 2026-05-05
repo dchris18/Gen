@@ -57,6 +57,8 @@ const IDLE_DELAY = 10000;
   let removeSelectedTiles = [];
   let addedThisDrag = [];
 
+let soilConnectorGroup = null;
+
   let dragging = false;
   let didDrag = false;
   let previousX = 0;
@@ -1637,6 +1639,81 @@ function undoLastAction() {
   restoreGardenState(previousState);
 }
 
+function getTileById(tileId) {
+  return tileMeshes.find((tile) => tile.userData.tileId === tileId);
+}
+
+function hasPlantAt(row, col, level) {
+  const tileId = `${row}-${col}-${level}`;
+  return Boolean(plantedItems[tileId]);
+}
+
+function makeSoilConnector(width, depth, x, z, y = 0.252) {
+  const connector = new THREE.Mesh(
+    new THREE.BoxGeometry(width, 0.024, depth),
+    materials.soilDark
+  );
+
+  connector.position.set(x, y, z);
+  connector.castShadow = true;
+  connector.receiveShadow = true;
+
+  return connector;
+}
+
+function rebuildSoilConnectors() {
+  if (!platform) return;
+
+  if (soilConnectorGroup) {
+    platform.remove(soilConnectorGroup);
+  }
+
+  soilConnectorGroup = new THREE.Group();
+
+  Object.keys(plantedItems).forEach((tileId) => {
+    const plant = plantedItems[tileId];
+    if (!plant) return;
+
+    const tile = getTileById(tileId);
+    if (!tile || tile.userData.removed) return;
+
+    const row = tile.userData.row;
+    const col = tile.userData.col;
+    const level = tile.userData.level;
+
+    const baseX = col - currentSize / 2 + 0.5;
+    const baseZ = row - currentSize / 2 + 0.5;
+    const baseY = level * 0.35 + 0.252;
+
+    // Connect right neighbor
+    if (hasPlantAt(row, col + 1, level)) {
+      soilConnectorGroup.add(
+        makeSoilConnector(0.42, 0.34, baseX + 0.5, baseZ, baseY)
+      );
+    }
+
+    // Connect bottom neighbor
+    if (hasPlantAt(row + 1, col, level)) {
+      soilConnectorGroup.add(
+        makeSoilConnector(0.34, 0.42, baseX, baseZ + 0.5, baseY)
+      );
+    }
+
+    // Fill middle if this tile is top-left of a 2x2 planted block
+    if (
+      hasPlantAt(row, col + 1, level) &&
+      hasPlantAt(row + 1, col, level) &&
+      hasPlantAt(row + 1, col + 1, level)
+    ) {
+      soilConnectorGroup.add(
+        makeSoilConnector(0.48, 0.48, baseX + 0.5, baseZ + 0.5, baseY + 0.002)
+      );
+    }
+  });
+
+  platform.add(soilConnectorGroup);
+}
+
 function plantOnSquare(tile) {
   if (!selectedPlant || tile.userData.removed) return;
 
@@ -1651,6 +1728,7 @@ function plantOnSquare(tile) {
 
     tile.parent.add(plant);
     plantedItems[tileId] = plant;
+    rebuildSoilConnectors();
   }
 
   function clearTileHighlight(tile) {
@@ -1746,6 +1824,7 @@ function plantOnSquare(tile) {
 
     clearTileHighlight(tile);
     plantedItems[tileId] = null;
+rebuildSoilConnectors();
 
     if (!removedTileIds.includes(tileId)) {
       removedTileIds.push(tileId);
