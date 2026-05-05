@@ -251,7 +251,8 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
   };
 
 if (eyeButton && gridMenu) {
-  eyeButton.addEventListener("click", () => {
+eyeButton.addEventListener("click", () => {
+  updateIconFocus(eyeButton);
     selectedTool = null;
     selectedPlant = null;
     toolPointerDown = false;
@@ -301,7 +302,8 @@ if (eyeButton && gridMenu) {
   });
 
 if (potButton && plantMenu) {
-  potButton.addEventListener("click", () => {
+potButton.addEventListener("click", () => {
+  updateIconFocus(potButton);
     const isOpen = plantMenu.classList.contains("open");
     closeAllPopups();
     if (!isOpen) plantMenu.classList.add("open");
@@ -309,8 +311,10 @@ if (potButton && plantMenu) {
 }
 
 if (tileMenuButton) {
-  tileMenuButton.addEventListener("click", () => {
-    selectedTool = "add";
+tileMenuButton.addEventListener("click", () => {
+  updateIconFocus(tileMenuButton);
+
+  selectedTool = "add";
 
     if (plantMenu) plantMenu.classList.remove("open");
     if (removePopup) removePopup.classList.remove("open");
@@ -321,8 +325,10 @@ if (tileMenuButton) {
 }
 
 if (tileRemoveButton) {
-  tileRemoveButton.addEventListener("click", () => {
-    selectedTool = "remove";
+tileRemoveButton.addEventListener("click", () => {
+  updateIconFocus(tileRemoveButton);
+
+  selectedTool = "remove";
 
     if (plantMenu) plantMenu.classList.remove("open");
     if (addPreview) addPreview.visible = false;
@@ -372,17 +378,54 @@ if (tileRemoveButton) {
   });
 }
 
+function getCurrentSeason(date) {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  if (
+    (month === 3 && day >= 20) ||
+    month === 4 ||
+    month === 5 ||
+    (month === 6 && day < 21)
+  ) {
+    return "Spring";
+  }
+
+  if (
+    (month === 6 && day >= 21) ||
+    month === 7 ||
+    month === 8 ||
+    (month === 9 && day < 22)
+  ) {
+    return "Summer";
+  }
+
+  if (
+    (month === 9 && day >= 22) ||
+    month === 10 ||
+    month === 11 ||
+    (month === 12 && day < 21)
+  ) {
+    return "Fall";
+  }
+
+  return "Winter";
+}
+
 function updateTopDateTime() {
   if (!topDateTime) return;
 
   const now = new Date();
+  const season = getCurrentSeason(now);
 
-  topDateTime.textContent = now.toLocaleString("en-US", {
+  const dateText = now.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit"
   });
+
+  topDateTime.textContent = `${season} | ${dateText}`;
 }
 
 updateTopDateTime();
@@ -1026,16 +1069,47 @@ function createGrassPlant(tileId) {
   const plant = new THREE.Group();
   plant.add(makeSoilBlob(tileId));
 
-  for (let i = 0; i < 10; i++) {
-    const angle = (i / 10) * Math.PI * 2;
-    const h = 0.22 + (i % 3) * 0.05;
-    const x = Math.cos(angle) * 0.09;
-    const z = Math.sin(angle) * 0.09;
+  const bladeData = [
+    { x: -0.16, z: -0.04, h: 0.34, lean: -0.42, mat: materials.leafDark },
+    { x: -0.09, z: 0.07, h: 0.42, lean: -0.25, mat: materials.leaf },
+    { x: -0.02, z: -0.08, h: 0.5, lean: -0.08, mat: materials.leafLight },
+    { x: 0.06, z: 0.05, h: 0.45, lean: 0.18, mat: materials.leaf },
+    { x: 0.14, z: -0.02, h: 0.36, lean: 0.38, mat: materials.leafDark },
+    { x: 0.02, z: 0.13, h: 0.32, lean: 0.05, mat: materials.leafYellow }
+  ];
 
-    plant.add(makeSimpleStem(h, 0.011, i % 2 === 0 ? materials.leafLight : materials.leaf, x, 0.25, z, Math.sin(angle) * -0.45, Math.cos(angle) * 0.45));
-  }
+  bladeData.forEach((blade, index) => {
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.008, 0.014, blade.h, 5),
+      blade.mat
+    );
 
-  plant.scale.set(0.9, 0.9, 0.9);
+    stem.position.set(blade.x, 0.25 + blade.h / 2, blade.z);
+    stem.rotation.z = blade.lean;
+    stem.rotation.x = (index % 2 === 0 ? 1 : -1) * 0.18;
+    stem.castShadow = true;
+    stem.receiveShadow = true;
+    plant.add(stem);
+
+    const tip = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.035, 0),
+      blade.mat
+    );
+
+    tip.position.set(
+      blade.x + blade.lean * 0.12,
+      0.25 + blade.h,
+      blade.z
+    );
+
+    tip.scale.set(0.65, 1.15, 0.5);
+    tip.rotation.set(0.4, index * 0.8, blade.lean);
+    tip.castShadow = true;
+    tip.receiveShadow = true;
+    plant.add(tip);
+  });
+
+  plant.scale.set(0.92, 0.92, 0.92);
   return plant;
 }
 
@@ -1671,6 +1745,33 @@ function captureGardenState() {
     },
     cameraZ: camera.position.z
   };
+}
+
+function updateIconFocus(activeButton) {
+  const iconButtons = [
+    bookmarkButton,
+    saveButton,
+    tileRemoveButton,
+    tileMenuButton,
+    eyeButton,
+    rewindButton,
+    potButton
+  ].filter(Boolean);
+
+  iconButtons.forEach((button) => {
+    button.classList.remove("icon-selected");
+    button.classList.remove("icon-near-selected");
+  });
+
+  if (!activeButton) return;
+
+  activeButton.classList.add("icon-selected");
+
+  iconButtons.forEach((button) => {
+    if (button !== activeButton) {
+      button.classList.add("icon-near-selected");
+    }
+  });
 }
 
 function saveUndoState() {
@@ -2897,7 +2998,8 @@ if (selectedTool === "remove") {
   }
 
 if (saveButton && nameSavePopup) {
-  saveButton.addEventListener("click", () => {
+saveButton.addEventListener("click", () => {
+  updateIconFocus(saveButton);
     closeAllPopups();
     nameSavePopup.classList.add("open");
   });
@@ -2932,7 +3034,8 @@ if (saveButton && nameSavePopup) {
   }
 
 if (bookmarkButton && savedListPopup) {
-  bookmarkButton.addEventListener("click", () => {
+bookmarkButton.addEventListener("click", () => {
+  updateIconFocus(bookmarkButton);
     closeAllPopups();
 
     if (typeof renderSavedList === "function") {
@@ -2944,7 +3047,8 @@ if (bookmarkButton && savedListPopup) {
 }
 
 if (rewindButton) {
-  rewindButton.addEventListener("click", () => {
+rewindButton.addEventListener("click", () => {
+  updateIconFocus(rewindButton);
     undoLastAction();
   });
 }
