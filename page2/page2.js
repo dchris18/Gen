@@ -1508,6 +1508,29 @@ function closeAllPopups() {
   if (savedListPopup) savedListPopup.classList.remove("open");
 }
 
+function isPointerNearPlatform(e, extraTiles = 1) {
+  updateMouseFromEvent(e);
+
+  if (!addPlane) return false;
+
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObject(addPlane);
+
+  if (hits.length === 0) return false;
+
+  const point = hits[0].point;
+
+  const half = currentSize / 2;
+  const buffer = extraTiles;
+
+  return (
+    point.x >= -half - buffer &&
+    point.x <= half + buffer &&
+    point.z >= -half - buffer &&
+    point.z <= half + buffer
+  );
+}
+
 function createPlant(type, tileId) {
   let plant;
 
@@ -2384,21 +2407,35 @@ container.addEventListener("pointerdown", (e) => {
 
   didDrag = false;
 
-  if (selectedTool === "add") {
-    toolPointerDown = true;
-    addedThisDrag = [];
-    addFromMouseEvent(e);
+if (selectedTool === "add") {
+  if (!isPointerNearPlatform(e, 1)) {
+    dragging = true;
+    previousX = e.clientX;
+    previousY = e.clientY;
     return;
   }
 
-  if (selectedTool === "remove") {
-    toolPointerDown = true;
-    clearRemoveSelection();
+  toolPointerDown = true;
+  addedThisDrag = [];
+  addFromMouseEvent(e);
+  return;
+}
 
-    const tile = getTileFromMouseEvent(e);
-    addTileToRemoveSelection(tile);
+if (selectedTool === "remove") {
+  const tile = getTileFromMouseEvent(e);
+
+  if (!tile) {
+    dragging = true;
+    previousX = e.clientX;
+    previousY = e.clientY;
     return;
   }
+
+  toolPointerDown = true;
+  clearRemoveSelection();
+  addTileToRemoveSelection(tile);
+  return;
+}
 
   dragging = true;
   previousX = e.clientX;
