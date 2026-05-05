@@ -2571,38 +2571,6 @@ container.addEventListener("pointercancel", (e) => {
     }
   });
 
-  if (backRemove) {
-    backRemove.addEventListener("click", () => {
-      clearRemoveSelection();
-
-      if (removePopup) {
-        removePopup.classList.remove("open");
-      }
-    });
-  }
-
-if (confirmRemove) {
-  confirmRemove.addEventListener("click", () => {
-    if (removeSelectedTiles.length === 0) return;
-
-    saveUndoState();
-
-    removeSelectedTiles.forEach((tile) => {
-      hideTile(tile);
-
-      if (selectedSquare === tile) {
-        selectedSquare = null;
-      }
-    });
-
-    removeSelectedTiles = [];
-
-    if (removePopup) {
-      removePopup.classList.remove("open");
-    }
-  });
-}
-
   function getSavedGardens() {
     return JSON.parse(localStorage.getItem("gardenSavesPage2")) || [];
   }
