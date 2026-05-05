@@ -2111,6 +2111,17 @@ rebuildSoilConnectors();
     return newTile;
   }
 
+function getTopTileAt(row, col) {
+  const stack = tileStacks[coordKey(row, col)] || [];
+  const visibleStack = stack.filter((tile) => !tile.userData.removed);
+
+  if (visibleStack.length === 0) return null;
+
+  return visibleStack.reduce((highest, tile) => {
+    return tile.userData.level > highest.userData.level ? tile : highest;
+  });
+}
+
   function addFromMouseEvent(e) {
     const coord = getAddCoordFromMouseEvent(e);
 
@@ -2122,6 +2133,12 @@ rebuildSoilConnectors();
 
 if (addedThisDrag.length === 0) {
   saveUndoState();
+}
+
+const topTile = getTopTileAt(row, col);
+
+if (topTile && plantedItems[topTile.userData.tileId]) {
+  return;
 }
 
 const addedTile = addTileAtCoord(coord.row, coord.col);
@@ -2401,41 +2418,55 @@ const addedTile = addTileAtCoord(coord.row, coord.col);
 
 container.addEventListener("pointerdown", (e) => {
   e.preventDefault();
-  container.setPointerCapture(e.pointerId);
 
-  activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (container.setPointerCapture) {
+    container.setPointerCapture(e.pointerId);
+  }
 
+  activePointers.set(e.pointerId, {
+    x: e.clientX,
+    y: e.clientY
+  });
+
+  lastPinchDistance = null;
   didDrag = false;
 
-if (selectedTool === "add") {
-  if (!isPointerNearPlatform(e, 1)) {
-    dragging = true;
-    previousX = e.clientX;
-    previousY = e.clientY;
+  // If two fingers are down, only zoom. Do not add/remove/rotate.
+  if (activePointers.size >= 2) {
+    toolPointerDown = false;
+    dragging = false;
     return;
   }
 
-  toolPointerDown = true;
-  addedThisDrag = [];
-  addFromMouseEvent(e);
-  return;
-}
+  if (selectedTool === "add") {
+    if (!isPointerNearPlatform(e, 1)) {
+      dragging = true;
+      previousX = e.clientX;
+      previousY = e.clientY;
+      return;
+    }
 
-if (selectedTool === "remove") {
-  const tile = getTileFromMouseEvent(e);
-
-  if (!tile) {
-    dragging = true;
-    previousX = e.clientX;
-    previousY = e.clientY;
+    toolPointerDown = true;
+    addedThisDrag = [];
+    addFromMouseEvent(e);
     return;
   }
 
-  toolPointerDown = true;
-  clearRemoveSelection();
-  addTileToRemoveSelection(tile);
-  return;
-}
+  if (selectedTool === "remove") {
+    const tile = getTileFromMouseEvent(e);
+
+    if (!tile) {
+      dragging = true;
+      previousX = e.clientX;
+      previousY = e.clientY;
+      return;
+    }
+
+    toolPointerDown = true;
+    clearRemoveSelection();
+    addTileToRemoveSelection(tile);
+    return;
+  }
 
   dragging = true;
   previousX = e.clientX;
@@ -2446,10 +2477,14 @@ container.addEventListener("pointermove", (e) => {
   e.preventDefault();
 
   if (activePointers.has(e.pointerId)) {
-    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    activePointers.set(e.pointerId, {
+      x: e.clientX,
+      y: e.clientY
+    });
   }
 
-  if (activePointers.size === 2) {
+  // Two fingers = pinch zoom only
+  if (activePointers.size >= 2) {
     const points = [...activePointers.values()];
     const dx = points[0].x - points[1].x;
     const dy = points[0].y - points[1].y;
@@ -2467,35 +2502,19 @@ container.addEventListener("pointermove", (e) => {
     return;
   }
 
-if (activePointers.has(e.pointerId)) {
-  activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-}
-
-if (activePointers.size === 2) {
-  const pinchDistance = getPinchDistance();
-
-  if (lastPinchDistance !== null && pinchDistance !== null) {
-    const delta = pinchDistance - lastPinchDistance;
-
-    camera.position.z -= delta * 0.025;
-    camera.position.z = Math.max(3.2, Math.min(18, camera.position.z));
-    camera.lookAt(0, 0, 0);
+  // Add preview only. This should NOT place tiles.
+  if (selectedTool === "add" && !toolPointerDown) {
+    updateAddPreview(e);
   }
 
-  lastPinchDistance = pinchDistance;
-  return;
-}
-
-if (selectedTool === "add" && !toolPointerDown) {
-  updateAddPreview(e);
-}
-
+  // Add chain only while pressing/dragging
   if (toolPointerDown && selectedTool === "add") {
     didDrag = true;
     addFromMouseEvent(e);
     return;
   }
 
+  // Remove chain only while pressing/dragging
   if (toolPointerDown && selectedTool === "remove") {
     didDrag = true;
 
@@ -2504,12 +2523,15 @@ if (selectedTool === "add" && !toolPointerDown) {
     return;
   }
 
+  // Rotate platform when dragging empty space
   if (!dragging || !platform) return;
 
   const moveX = e.clientX - previousX;
   const moveY = e.clientY - previousY;
 
-  if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) didDrag = true;
+  if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) {
+    didDrag = true;
+  }
 
   platform.rotation.y += moveX * 0.01;
   platform.rotation.x += moveY * 0.01;
@@ -2525,45 +2547,58 @@ container.addEventListener("pointerup", (e) => {
   activePointers.delete(e.pointerId);
   lastPinchDistance = null;
 
-if (toolPointerDown && selectedTool === "add") {
-  toolPointerDown = false;
-  addedThisDrag = [];
-
-  if (addPreview) {
-    addPreview.visible = false;
+  if (container.releasePointerCapture) {
+    try {
+      container.releasePointerCapture(e.pointerId);
+    } catch (error) {}
   }
 
-  return;
-}
+  if (toolPointerDown && selectedTool === "add") {
+    toolPointerDown = false;
+    addedThisDrag = [];
 
-if (toolPointerDown && selectedTool === "remove") {
-  toolPointerDown = false;
+    if (addPreview) {
+      addPreview.visible = false;
+    }
 
-  if (removeSelectedTiles.length > 0) {
-    saveUndoState();
+    return;
+  }
 
-    removeSelectedTiles.forEach((tile) => {
-      if (!tile) return;
+  if (toolPointerDown && selectedTool === "remove") {
+    toolPointerDown = false;
 
-      const tileId = tile.userData.tileId;
+    if (removeSelectedTiles.length > 0) {
+      saveUndoState();
 
-      tile.userData.removed = true;
-      tile.userData.visibleTile.visible = false;
+      removeSelectedTiles.forEach((tile) => {
+        if (!tile) return;
 
-      tile.userData.tileLines.forEach((line) => {
-        line.visible = false;
+        const tileId = tile.userData.tileId;
+
+        tile.userData.removed = true;
+        tile.userData.visibleTile.visible = false;
+
+        tile.userData.tileLines.forEach((line) => {
+          line.visible = false;
+        });
+
+        removePlantByTileId(tileId);
+
+        if (!removedTileIds.includes(tileId)) {
+          removedTileIds.push(tileId);
+        }
+
+        if (selectedSquare === tile) {
+          selectedSquare = null;
+        }
       });
 
-      removePlantByTileId(tileId);
-      removedTileIds.push(tileId);
-    });
+      clearRemoveSelection();
+      rebuildSoilConnectors();
+    }
 
-    clearRemoveSelection();
-    rebuildSoilConnectors();
+    return;
   }
-
-  return;
-}
 
   dragging = false;
 });
@@ -2575,6 +2610,10 @@ container.addEventListener("pointercancel", (e) => {
   toolPointerDown = false;
   dragging = false;
   addedThisDrag = [];
+
+  if (addPreview) {
+    addPreview.visible = false;
+  }
 });
 
 container.addEventListener("click", (e) => {
@@ -2613,19 +2652,19 @@ container.addEventListener("click", (e) => {
 
   raycaster.setFromCamera(mouse, camera);
 
-    const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
-    const hits = raycaster.intersectObjects(visibleTiles);
+  const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
+  const hits = raycaster.intersectObjects(visibleTiles);
 
-    if (hits.length > 0) {
-      const clickedTile = hits[0].object;
+  if (hits.length > 0) {
+    const clickedTile = hits[0].object;
 
-      setSelectedSquare(clickedTile);
+    setSelectedSquare(clickedTile);
 
-      if (selectedTool === "plant" && selectedPlant) {
-        plantOnSquare(clickedTile);
-      }
+    if (selectedTool === "plant" && selectedPlant) {
+      plantOnSquare(clickedTile);
     }
-  });
+  }
+});
 
   function getSavedGardens() {
     return JSON.parse(localStorage.getItem("gardenSavesPage2")) || [];
