@@ -164,6 +164,56 @@ button {
   height: 100%;
 }
 
+.tile-menu-button {
+  position: absolute;
+  left: 18px;
+  bottom: 68px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 20;
+}
+
+.tile-menu-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.tile-tool-menu {
+  position: absolute;
+  left: 18px;
+  bottom: 128px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 21;
+}
+
+.tile-tool-menu.open {
+  display: flex;
+}
+
+.tile-tool-option {
+  width: 54px;
+  height: 54px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tile-tool-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .rewind-button {
   position: absolute;
   right: 14px;

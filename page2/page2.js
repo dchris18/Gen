@@ -13,6 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const plantCards = document.querySelectorAll(".plant-card");
   const container = document.querySelector("#three-platform");
 
+const tileMenuButton = document.querySelector(".tile-menu-button");
+const tileToolMenu = document.querySelector(".tile-tool-menu");
+const tileAddOption = document.querySelector(".tile-add-option");
+const tileRemoveOption = document.querySelector(".tile-remove-option");
+
   const removePopup = document.querySelector(".remove-popup");
   const confirmRemove = document.querySelector(".confirm-remove");
   const backRemove = document.querySelector(".back-remove");
@@ -277,6 +282,47 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
 if (potButton && plantMenu) {
   potButton.addEventListener("click", () => {
     plantMenu.classList.toggle("open");
+  });
+}
+
+if (tileMenuButton && tileToolMenu) {
+  tileMenuButton.addEventListener("click", () => {
+    tileToolMenu.classList.toggle("open");
+  });
+}
+
+if (tileAddOption) {
+  tileAddOption.addEventListener("click", () => {
+    selectedTool = "add";
+
+    toolButtons.forEach((item) => item.classList.remove("selected"));
+
+    const addButton = document.querySelector(".tool-trowel");
+    if (addButton) addButton.classList.add("selected");
+
+    if (plantMenu) plantMenu.classList.remove("open");
+    if (removePopup) removePopup.classList.remove("open");
+    if (addPreview) addPreview.visible = false;
+
+    clearRemoveSelection();
+    tileToolMenu.classList.remove("open");
+  });
+}
+
+if (tileRemoveOption) {
+  tileRemoveOption.addEventListener("click", () => {
+    selectedTool = "remove";
+
+    toolButtons.forEach((item) => item.classList.remove("selected"));
+
+    const removeButton = document.querySelector(".tool-shears");
+    if (removeButton) removeButton.classList.add("selected");
+
+    if (plantMenu) plantMenu.classList.remove("open");
+    if (addPreview) addPreview.visible = false;
+
+    clearRemoveSelection();
+    tileToolMenu.classList.remove("open");
   });
 }
 
@@ -922,6 +968,7 @@ function createCloverPlant(tileId) {
   plant.scale.set(0.9, 0.9, 0.9);
   return plant;
 }
+
 
 function createHostaPlant(tileId) {
   const plant = new THREE.Group();
