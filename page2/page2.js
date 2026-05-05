@@ -184,6 +184,58 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   };
 
+  if (eyeButton && gridMenu) {
+    eyeButton.addEventListener("click", () => {
+      gridMenu.classList.toggle("open");
+    });
+  }
+
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      toolButtons.forEach((item) => item.classList.remove("selected"));
+      button.classList.add("selected");
+
+      clearRemoveSelection();
+
+      if (removePopup) removePopup.classList.remove("open");
+
+      if (button.classList.contains("tool-pot")) {
+        selectedTool = "plant";
+        if (addPreview) addPreview.visible = false;
+      } else if (button.classList.contains("tool-shears")) {
+        selectedTool = "remove";
+        if (plantMenu) plantMenu.classList.remove("open");
+        if (addPreview) addPreview.visible = false;
+      } else {
+        selectedTool = "add";
+        if (plantMenu) plantMenu.classList.remove("open");
+      }
+    });
+  });
+
+  if (potButton && plantMenu) {
+    potButton.addEventListener("click", () => {
+      plantMenu.classList.toggle("open");
+    });
+  }
+
+  plantCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      plantCards.forEach((item) => item.classList.remove("selected"));
+      card.classList.add("selected");
+
+      selectedPlant = card.dataset.plant;
+      selectedTool = "plant";
+
+      if (addPreview) addPreview.visible = false;
+      if (plantMenu) plantMenu.classList.remove("open");
+
+      if (selectedSquare && !selectedSquare.userData.removed) {
+        plantOnSquare(selectedSquare);
+      }
+    });
+  });
+
   function seededRandom(seedText) {
     let seed = 0;
 
@@ -211,19 +263,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function makeLowPolyLeaf(length, width, material) {
-    const shape = new THREE.Shape();
+    const leaf = new THREE.Mesh(
+      new THREE.SphereGeometry(0.2, 7, 5),
+      material
+    );
 
-    shape.moveTo(0, 0);
-    shape.lineTo(-width * 0.45, length * 0.28);
-    shape.lineTo(-width * 0.32, length * 0.68);
-    shape.lineTo(0, length);
-    shape.lineTo(width * 0.32, length * 0.68);
-    shape.lineTo(width * 0.45, length * 0.28);
-    shape.lineTo(0, 0);
-
-    const geometry = new THREE.ShapeGeometry(shape);
-    const leaf = new THREE.Mesh(geometry, material);
-
+    leaf.scale.set(width * 2.2, 0.08, length * 1.65);
     leaf.castShadow = true;
     leaf.receiveShadow = true;
 
@@ -243,46 +288,66 @@ document.addEventListener("DOMContentLoaded", () => {
     return leaf;
   }
 
-  function makeSoilBlob(tileId) {
-    const group = new THREE.Group();
-    const rand = seededRandom(tileId + "-soil");
+function makeSoilBlob(tileId) {
+  const group = new THREE.Group();
+  const rand = seededRandom(tileId + "-soil");
 
-    for (let i = 0; i < 10; i++) {
-      let material = materials.soil;
-      const pick = rand();
+  const patchCount = 7;
 
-      if (pick > 0.72) material = materials.soilDark;
-      else if (pick < 0.3) material = materials.soilLight;
+  for (let i = 0; i < patchCount; i++) {
+    let material = materials.soil;
+    const pick = rand();
 
-      const patch = new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          0.18 + rand() * 0.13,
-          0.22 + rand() * 0.15,
-          0.03,
-          6
-        ),
-        material
-      );
+    if (pick > 0.78) material = materials.soilDark;
+    else if (pick < 0.25) material = materials.soilLight;
 
-      const nearEdge = i > 5;
-      const range = nearEdge ? 0.52 : 0.35;
+    const patch = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.15 + rand() * 0.08,
+        0.17 + rand() * 0.09,
+        0.026,
+        7
+      ),
+      material
+    );
 
-      patch.position.set(
-        (rand() - 0.5) * range * 2,
-        0.235 + i * 0.002,
-        (rand() - 0.5) * range * 2
-      );
+    const angle = (i / patchCount) * Math.PI * 2 + rand() * 0.35;
+    const distance = i === 0 ? 0 : 0.12 + rand() * 0.22;
 
-      patch.scale.set(1 + rand() * 0.58, 1, 0.68 + rand() * 0.48);
-      patch.rotation.y = rand() * Math.PI * 2;
-      patch.castShadow = true;
-      patch.receiveShadow = true;
+    patch.position.set(
+      Math.cos(angle) * distance,
+      0.235 + i * 0.002,
+      Math.sin(angle) * distance
+    );
 
-      group.add(patch);
-    }
+    patch.scale.set(
+      1 + rand() * 0.35,
+      1,
+      0.75 + rand() * 0.25
+    );
 
-    return group;
+    patch.rotation.y = angle + rand() * 0.6;
+    patch.castShadow = true;
+    patch.receiveShadow = true;
+
+    group.add(patch);
   }
+
+  const centerPatch = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.26, 0.3, 0.028, 7),
+    materials.soilDark
+  );
+
+  centerPatch.position.y = 0.248;
+  centerPatch.scale.set(1.05, 1, 0.9);
+  centerPatch.rotation.y = rand() * Math.PI * 2;
+  centerPatch.castShadow = true;
+  centerPatch.receiveShadow = true;
+
+  group.add(centerPatch);
+
+  return group;
+}
 
   function markPlantPieces(group, tileId) {
     group.traverse((child) => {
@@ -294,6 +359,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function placeLeaf(group, leaf, x, y, z, rotX, rotY, rotZ) {
     leaf.position.set(x, y, z);
     leaf.rotation.set(rotX, rotY, rotZ);
+
+    const connector = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.01, 0.014, 0.18, 5),
+      materials.stemLight
+    );
+
+    connector.position.set(x * 0.72, y - 0.06, z * 0.72);
+    connector.rotation.z = Math.cos(rotZ) * 0.55;
+    connector.rotation.x = Math.sin(rotZ) * -0.55;
+    connector.castShadow = true;
+    connector.receiveShadow = true;
+
+    group.add(connector);
     group.add(leaf);
   }
 
