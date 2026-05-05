@@ -68,6 +68,10 @@ let soilConnectorGroup = null;
   let previousY = 0;
   let toolPointerDown = false;
 
+
+let activePointers = new Map();
+let lastPinchDistance = null;
+
   let savedRotation = { x: 0.55, y: -0.75 };
 
   const scene = new THREE.Scene();
@@ -2368,6 +2372,8 @@ container.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   container.setPointerCapture(e.pointerId);
 
+  activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
   didDrag = false;
 
   if (selectedTool === "add") {
@@ -2393,6 +2399,47 @@ container.addEventListener("pointerdown", (e) => {
 
 container.addEventListener("pointermove", (e) => {
   e.preventDefault();
+
+  if (activePointers.has(e.pointerId)) {
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+
+  if (activePointers.size === 2) {
+    const points = [...activePointers.values()];
+    const dx = points[0].x - points[1].x;
+    const dy = points[0].y - points[1].y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (lastPinchDistance !== null) {
+      const delta = distance - lastPinchDistance;
+
+      camera.position.z -= delta * 0.025;
+      camera.position.z = Math.max(3.2, Math.min(18, camera.position.z));
+      camera.lookAt(0, 0, 0);
+    }
+
+    lastPinchDistance = distance;
+    return;
+  }
+
+if (activePointers.has(e.pointerId)) {
+  activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+}
+
+if (activePointers.size === 2) {
+  const pinchDistance = getPinchDistance();
+
+  if (lastPinchDistance !== null && pinchDistance !== null) {
+    const delta = pinchDistance - lastPinchDistance;
+
+    camera.position.z -= delta * 0.025;
+    camera.position.z = Math.max(3.2, Math.min(18, camera.position.z));
+    camera.lookAt(0, 0, 0);
+  }
+
+  lastPinchDistance = pinchDistance;
+  return;
+}
 
   if (selectedTool === "add" && !toolPointerDown) {
     updateAddPreview(e);
@@ -2430,6 +2477,9 @@ container.addEventListener("pointermove", (e) => {
 container.addEventListener("pointerup", (e) => {
   e.preventDefault();
 
+  activePointers.delete(e.pointerId);
+  lastPinchDistance = null;
+
   if (toolPointerDown && selectedTool === "add") {
     toolPointerDown = false;
     addedThisDrag = [];
@@ -2449,7 +2499,10 @@ container.addEventListener("pointerup", (e) => {
   dragging = false;
 });
 
-container.addEventListener("pointercancel", () => {
+container.addEventListener("pointercancel", (e) => {
+  activePointers.delete(e.pointerId);
+  lastPinchDistance = null;
+
   toolPointerDown = false;
   dragging = false;
   addedThisDrag = [];
