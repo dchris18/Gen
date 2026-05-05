@@ -16,9 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
 const tileMenuButton = document.querySelector(".tile-menu-button");
 const tileRemoveButton = document.querySelector(".tile-remove-button");
 
-  const removePopup = document.querySelector(".remove-popup");
-  const confirmRemove = document.querySelector(".confirm-remove");
-  const backRemove = document.querySelector(".back-remove");
 
   const saveButton = document.querySelector(".save-button");
   const bookmarkButton = document.querySelector(".bookmark-button");
@@ -252,11 +249,13 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
     })
   };
 
-  if (eyeButton && gridMenu) {
-    eyeButton.addEventListener("click", () => {
-      gridMenu.classList.toggle("open");
-    });
-  }
+if (eyeButton && gridMenu) {
+  eyeButton.addEventListener("click", () => {
+    const isOpen = gridMenu.classList.contains("open");
+    closeAllPopups();
+    if (!isOpen) gridMenu.classList.add("open");
+  });
+}
 
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -283,7 +282,9 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
 
 if (potButton && plantMenu) {
   potButton.addEventListener("click", () => {
-    plantMenu.classList.toggle("open");
+    const isOpen = plantMenu.classList.contains("open");
+    closeAllPopups();
+    if (!isOpen) plantMenu.classList.add("open");
   });
 }
 
@@ -1500,6 +1501,14 @@ function createRadishPlant(tileId) {
   return plant;
 }
 
+function closeAllPopups() {
+  if (plantMenu) plantMenu.classList.remove("open");
+  if (gridMenu) gridMenu.classList.remove("open");
+  if (removePopup) removePopup.classList.remove("open");
+  if (nameSavePopup) nameSavePopup.classList.remove("open");
+  if (savedListPopup) savedListPopup.classList.remove("open");
+}
+
 function createPlant(type, tileId) {
   let plant;
 
@@ -2480,21 +2489,34 @@ container.addEventListener("pointerup", (e) => {
   activePointers.delete(e.pointerId);
   lastPinchDistance = null;
 
-  if (toolPointerDown && selectedTool === "add") {
-    toolPointerDown = false;
-    addedThisDrag = [];
-    return;
+if (toolPointerDown && selectedTool === "remove") {
+  toolPointerDown = false;
+
+  if (removeSelectedTiles.length > 0) {
+    saveUndoState();
+
+    removeSelectedTiles.forEach((tile) => {
+      if (!tile) return;
+
+      const tileId = tile.userData.tileId;
+
+      tile.userData.removed = true;
+      tile.userData.visibleTile.visible = false;
+
+      tile.userData.tileLines.forEach((line) => {
+        line.visible = false;
+      });
+
+      removePlantByTileId(tileId);
+      removedTileIds.push(tileId);
+    });
+
+    clearRemoveSelection();
+    rebuildSoilConnectors();
   }
 
-  if (toolPointerDown && selectedTool === "remove") {
-    toolPointerDown = false;
-
-    if (removeSelectedTiles.length > 0) {
-      openRemoveTilesPopup();
-    }
-
-    return;
-  }
+  return;
+}
 
   dragging = false;
 });
@@ -2739,15 +2761,12 @@ if (confirmRemove) {
     });
   }
 
-  if (saveButton) {
-    saveButton.addEventListener("click", () => {
-      if (nameSavePopup && saveNameInput) {
-        saveNameInput.value = "";
-        nameSavePopup.classList.add("open");
-        saveNameInput.focus();
-      }
-    });
-  }
+if (saveButton && nameSavePopup) {
+  saveButton.addEventListener("click", () => {
+    closeAllPopups();
+    nameSavePopup.classList.add("open");
+  });
+}
 
   if (cancelSave) {
     cancelSave.addEventListener("click", () => {
@@ -2777,12 +2796,12 @@ if (confirmRemove) {
     });
   }
 
-  if (bookmarkButton) {
-    bookmarkButton.addEventListener("click", () => {
-      renderSavedList();
-      if (savedListPopup) savedListPopup.classList.add("open");
-    });
-  }
+if (bookmarkButton && savedListPopup) {
+  bookmarkButton.addEventListener("click", () => {
+    closeAllPopups();
+    savedListPopup.classList.add("open");
+  });
+}
 
 if (rewindButton) {
   rewindButton.addEventListener("click", () => {

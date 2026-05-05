@@ -76,8 +76,8 @@ button {
 .name-save-popup,
 .saved-list-popup {
   position: absolute;
-  left: 20px;
-  top: 150px;
+  right: 20px;
+  top: 140px;
   width: 244px;
   padding: 16px;
   border-radius: 22px;
@@ -249,8 +249,8 @@ button {
 
 .grid-menu {
   position: absolute;
-  left: 20px;
-  top: 150px;
+  right: 20px;
+  top: 140px;
   padding: 7px;
   border-radius: 14px;
   background: #f0dfb8;
@@ -276,8 +276,8 @@ button {
 
 .plant-menu {
   position: absolute;
-  left: 20px;
-  top: 150px;
+  right: 20px;
+  top: 140px;
   width: 244px;
   max-height: calc(100vh - 260px);
   overflow-y: auto;
@@ -367,9 +367,8 @@ button {
 
 .remove-popup {
   position: absolute;
-  left: 20px;
-  top: 150px;
-  width: 244px;
+  right: 20px;
+  top: 140px;
   padding: 16px;
   border-radius: 22px;
   background: #f0dfb8;
