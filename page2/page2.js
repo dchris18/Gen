@@ -2337,85 +2337,96 @@ const addedTile = addTileAtCoord(coord.row, coord.col);
     });
   });
 
-  container.addEventListener("mousedown", (e) => {
-    didDrag = false;
+container.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  container.setPointerCapture(e.pointerId);
 
-    if (selectedTool === "add") {
-      toolPointerDown = true;
-      addedThisDrag = [];
-      addFromMouseEvent(e);
-      return;
+  didDrag = false;
+
+  if (selectedTool === "add") {
+    toolPointerDown = true;
+    addedThisDrag = [];
+    addFromMouseEvent(e);
+    return;
+  }
+
+  if (selectedTool === "remove") {
+    toolPointerDown = true;
+    clearRemoveSelection();
+
+    const tile = getTileFromMouseEvent(e);
+    addTileToRemoveSelection(tile);
+    return;
+  }
+
+  dragging = true;
+  previousX = e.clientX;
+  previousY = e.clientY;
+});
+
+container.addEventListener("pointermove", (e) => {
+  e.preventDefault();
+
+  if (selectedTool === "add" && !toolPointerDown) {
+    updateAddPreview(e);
+  }
+
+  if (toolPointerDown && selectedTool === "add") {
+    didDrag = true;
+    addFromMouseEvent(e);
+    return;
+  }
+
+  if (toolPointerDown && selectedTool === "remove") {
+    didDrag = true;
+
+    const tile = getTileFromMouseEvent(e);
+    addTileToRemoveSelection(tile);
+    return;
+  }
+
+  if (!dragging || !platform) return;
+
+  const moveX = e.clientX - previousX;
+  const moveY = e.clientY - previousY;
+
+  if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) didDrag = true;
+
+  platform.rotation.y += moveX * 0.01;
+  platform.rotation.x += moveY * 0.01;
+  platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
+
+  previousX = e.clientX;
+  previousY = e.clientY;
+});
+
+container.addEventListener("pointerup", (e) => {
+  e.preventDefault();
+
+  if (toolPointerDown && selectedTool === "add") {
+    toolPointerDown = false;
+    addedThisDrag = [];
+    return;
+  }
+
+  if (toolPointerDown && selectedTool === "remove") {
+    toolPointerDown = false;
+
+    if (removeSelectedTiles.length > 0) {
+      openRemoveTilesPopup();
     }
 
-    if (selectedTool === "remove") {
-      toolPointerDown = true;
-      clearRemoveSelection();
+    return;
+  }
 
-      const tile = getTileFromMouseEvent(e);
-      addTileToRemoveSelection(tile);
+  dragging = false;
+});
 
-      return;
-    }
-
-    dragging = true;
-    previousX = e.clientX;
-    previousY = e.clientY;
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (selectedTool === "add" && !toolPointerDown) {
-      updateAddPreview(e);
-    }
-
-    if (toolPointerDown && selectedTool === "add") {
-      didDrag = true;
-      addFromMouseEvent(e);
-      return;
-    }
-
-    if (toolPointerDown && selectedTool === "remove") {
-      didDrag = true;
-
-      const tile = getTileFromMouseEvent(e);
-      addTileToRemoveSelection(tile);
-
-      return;
-    }
-
-    if (!dragging || !platform) return;
-
-    const moveX = e.clientX - previousX;
-    const moveY = e.clientY - previousY;
-
-    if (Math.abs(moveX) > 2 || Math.abs(moveY) > 2) didDrag = true;
-
-    platform.rotation.y += moveX * 0.01;
-    platform.rotation.x += moveY * 0.01;
-    platform.rotation.x = Math.max(-0.4, Math.min(0.9, platform.rotation.x));
-
-    previousX = e.clientX;
-    previousY = e.clientY;
-  });
-
-  document.addEventListener("mouseup", () => {
-    if (toolPointerDown && selectedTool === "add") {
-      toolPointerDown = false;
-      addedThisDrag = [];
-      return;
-    }
-
-    if (toolPointerDown && selectedTool === "remove") {
-      toolPointerDown = false;
-
-      if (removeSelectedTiles.length > 0) {
-        openRemoveTilesPopup();
-      }
-
-      return;
-    }
-
-    dragging = false;
-  });
+container.addEventListener("pointercancel", () => {
+  toolPointerDown = false;
+  dragging = false;
+  addedThisDrag = [];
+});
 
   container.addEventListener("click", (e) => {
     if (selectedTool === "remove") return;
