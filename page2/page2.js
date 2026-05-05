@@ -2911,8 +2911,8 @@ if (bookmarkButton && savedListPopup) {
   bookmarkButton.addEventListener("click", () => {
     closeAllPopups();
 
-    if (typeof renderSavedGardens === "function") {
-      renderSavedGardens();
+    if (typeof renderSavedList === "function") {
+      renderSavedList();
     }
 
     savedListPopup.classList.add("open");
