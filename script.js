@@ -2679,12 +2679,12 @@ container.addEventListener("click", (e) => {
   if (plantHits.length > 0) {
     const tileId = plantHits[0].object.userData.tileId;
 
-    if (selectedTool === "remove") {
-      saveUndoState();
-      removePlantByTileId(tileId);
-      rebuildSoilConnectors();
-      return;
-    }
+if (selectedTool === "remove") {
+  saveUndoState();
+  removePlantByTileId(tileId);
+  rebuildSoilConnectors();
+  return;
+}
 
     const plant = plantedItems[tileId];
 
@@ -2984,3 +2984,20 @@ function animate() {
 
 animate();
 });
+
+.eye-button {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ece8c9 !important;
+}
+
+.eye-button img {
+  width: 150% !important;
+  height: 150% !important;
+  object-fit: cover !important;
+  object-position: center;
+  transform: translate(-17%, -17%) scale(1.05);
+  mix-blend-mode: multiply;
+}
