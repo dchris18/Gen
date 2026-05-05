@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const container = document.querySelector("#three-platform");
 
 const tileMenuButton = document.querySelector(".tile-menu-button");
+const tileRemoveButton = document.querySelector(".tile-remove-button");
 const tileToolMenu = document.querySelector(".tile-tool-menu");
 const tileAddOption = document.querySelector(".tile-add-option");
 const tileRemoveOption = document.querySelector(".tile-remove-option");
@@ -285,44 +286,30 @@ if (potButton && plantMenu) {
   });
 }
 
-if (tileMenuButton && tileToolMenu) {
+if (tileMenuButton) {
   tileMenuButton.addEventListener("click", () => {
-    tileToolMenu.classList.toggle("open");
-  });
-}
-
-if (tileAddOption) {
-  tileAddOption.addEventListener("click", () => {
     selectedTool = "add";
 
     toolButtons.forEach((item) => item.classList.remove("selected"));
-
-    const addButton = document.querySelector(".tool-trowel");
-    if (addButton) addButton.classList.add("selected");
 
     if (plantMenu) plantMenu.classList.remove("open");
     if (removePopup) removePopup.classList.remove("open");
     if (addPreview) addPreview.visible = false;
 
     clearRemoveSelection();
-    tileToolMenu.classList.remove("open");
   });
 }
 
-if (tileRemoveOption) {
-  tileRemoveOption.addEventListener("click", () => {
+if (tileRemoveButton) {
+  tileRemoveButton.addEventListener("click", () => {
     selectedTool = "remove";
 
     toolButtons.forEach((item) => item.classList.remove("selected"));
-
-    const removeButton = document.querySelector(".tool-shears");
-    if (removeButton) removeButton.classList.add("selected");
 
     if (plantMenu) plantMenu.classList.remove("open");
     if (addPreview) addPreview.visible = false;
 
     clearRemoveSelection();
-    tileToolMenu.classList.remove("open");
   });
 }
 

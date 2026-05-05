@@ -24,8 +24,8 @@ button {
 
 .screen {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: min(100vw, 390px);
+  height: min(100vh, 844px);
   overflow: hidden;
   background: #7f8d7b;
 }
@@ -189,8 +189,6 @@ button {
   left: 18px;
   bottom: 128px;
   display: none;
-  flex-direction: column;
-  gap: 10px;
   z-index: 21;
 }
 
