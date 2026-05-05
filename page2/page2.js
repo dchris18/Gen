@@ -15,9 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const tileMenuButton = document.querySelector(".tile-menu-button");
 const tileRemoveButton = document.querySelector(".tile-remove-button");
-const tileToolMenu = document.querySelector(".tile-tool-menu");
-const tileAddOption = document.querySelector(".tile-add-option");
-const tileRemoveOption = document.querySelector(".tile-remove-option");
 
   const removePopup = document.querySelector(".remove-popup");
   const confirmRemove = document.querySelector(".confirm-remove");
