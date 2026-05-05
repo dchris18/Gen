@@ -1760,23 +1760,28 @@ function rebuildSoilConnectors() {
     }
   });
 
-  platform.add(soilConnectorGroup);
+    platform.add(soilConnectorGroup);
 }
 
-    const tileId = tile.userData.tileId;
+function plantOnSquare(tile) {
+  if (!selectedPlant || tile.userData.removed) return;
 
-    removePlantFromSquare(tile);
+  saveUndoState();
 
-    const plant = createPlant(selectedPlant, tileId);
-    markPlantPieces(plant, tileId);
+  const tileId = tile.userData.tileId;
 
-    tile.parent.add(plant);
-    plantedItems[tileId] = plant;
-    rebuildSoilConnectors();
-  }
+  removePlantFromSquare(tile);
 
-  function clearTileHighlight(tile) {
-    if (!tile) return;
+  const plant = createPlant(selectedPlant, tileId);
+  markPlantPieces(plant, tileId);
+
+  tile.parent.add(plant);
+  plantedItems[tileId] = plant;
+  rebuildSoilConnectors();
+}
+
+function clearTileHighlight(tile) {
+  if (!tile) return;
 
     tile.userData.outerGlow.material.opacity = 0;
     tile.userData.glow.material.opacity = 0;
