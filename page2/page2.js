@@ -2176,11 +2176,6 @@ function getTopTileAt(row, col) {
 
     const dragKey = `${coord.row}-${coord.col}`;
 
-    const topTile = getTopTileAt(row, col);
-
-if (topTile && plantedItems[topTile.userData.tileId]) {
-  return;
-}
 
     if (addedThisDrag.includes(dragKey)) return;
 
