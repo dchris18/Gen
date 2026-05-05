@@ -1517,13 +1517,13 @@ function createPlant(type, tileId) {
     tileStacks[key].sort((a, b) => a.userData.level - b.userData.level);
   }
 
-  function getTopLevel(row, col) {
-    const stack = tileStacks[coordKey(row, col)] || [];
+function getTopLevel(row, col) {
+  const stack = tileStacks[coordKey(row, col)] || [];
 
-    if (stack.length === 0) return -1;
+  if (stack.length === 0) return -1;
 
-    return Math.max(...stack.map((tile) => tile.userData.level));
-  }
+  return Math.max(...stack.map((tile) => tile.userData.level));
+}
 
   function removePlantFromSquare(tile) {
     const tileId = tile.userData.tileId;
