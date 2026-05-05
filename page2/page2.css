@@ -22,6 +22,30 @@ button {
   font: inherit;
 }
 
+.top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 46px;
+  background: #8f765d;
+  border-bottom: 2px solid #ece8c9;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  color: #ece8c9;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+.top-title,
+.top-datetime {
+  color: #ece8c9;
+  white-space: nowrap;
+}
+
 .screen {
   position: relative;
   width: 100vw;
@@ -164,6 +188,7 @@ button {
   position: relative;
   width: 100%;
   height: 100%;
+  padding-top: 46px;
 }
 
 .tile-menu-button,
@@ -223,6 +248,10 @@ button {
 
 #three-platform:active {
   cursor: grabbing;
+}
+
+#three-platform {
+  top: 46px;
 }
 
 #three-platform canvas {

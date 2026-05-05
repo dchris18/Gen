@@ -3,6 +3,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  const topDateTime = document.querySelector(".top-datetime");
   const eyeButton = document.querySelector(".eye-button");
   const gridMenu = document.querySelector(".grid-menu");
   const rewindButton = document.querySelector(".rewind-button");
@@ -351,6 +352,22 @@ if (tileRemoveButton) {
     }
   });
 }
+
+function updateTopDateTime() {
+  if (!topDateTime) return;
+
+  const now = new Date();
+
+  topDateTime.textContent = now.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+updateTopDateTime();
+setInterval(updateTopDateTime, 1000);
 
 function makeIco(size, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) {
   const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(size, 0), material);
