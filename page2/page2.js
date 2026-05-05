@@ -272,11 +272,11 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
     });
   });
 
-  if (potButton && plantMenu) {
-    potButton.addEventListener("click", () => {
-      plantMenu.classList.toggle("open");
-    });
-  }
+if (potButton && plantMenu) {
+  potButton.addEventListener("click", () => {
+    plantMenu.classList.toggle("open");
+  });
+}
 
   if (plantMenu) {
   plantMenu.addEventListener("click", (e) => {
@@ -285,9 +285,19 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
     if (categoryButton) {
       const category = categoryButton.dataset.category;
       const list = plantMenu.querySelector(`[data-list="${category}"]`);
+      const isAlreadyOpen = list && list.classList.contains("open");
 
-      if (list) {
-        list.classList.toggle("open");
+      plantMenu.querySelectorAll(".plant-category-list").forEach((item) => {
+        item.classList.remove("open");
+      });
+
+      plantMenu.querySelectorAll(".plant-category-btn").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      if (!isAlreadyOpen && list) {
+        list.classList.add("open");
+        categoryButton.classList.add("active");
       }
 
       return;
@@ -302,7 +312,6 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
     });
 
     card.classList.add("selected");
-
     selectedPlant = card.dataset.plant;
     selectedTool = "plant";
 

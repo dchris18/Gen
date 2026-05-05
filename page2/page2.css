@@ -253,15 +253,18 @@ button {
 
 .plant-menu {
   position: absolute;
-  left: 22px;
-  bottom: 112px;
-  width: 276px;
-  padding: 14px;
+  left: 16px;
+  top: 90px;
+  width: 210px;
+  max-height: 430px;
+  overflow-y: auto;
+  background: #f2e7c8;
+  border: 4px solid #de9572;
   border-radius: 22px;
-  background: #f0dfb8;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
-  z-index: 20;
+  padding: 14px;
+  z-index: 40;
   display: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .plant-menu.open {
@@ -269,51 +272,57 @@ button {
 }
 
 .plant-menu h2 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: #7a4144;
-  font-size: 20px;
+  font-size: 18px;
 }
 
-.plant-menu h3 {
-  margin: 14px 0 6px;
-  font-size: 14px;
+.plant-category-btn {
+  width: 100%;
+  margin: 6px 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 15px;
+  background: #ece8c9;
   color: #7a4144;
-  letter-spacing: 0.4px;
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plant-category-btn.active {
+  background: #dba071;
+  color: #fff6df;
+}
+
+.plant-category-list {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.plant-category-list.open {
+  display: flex;
 }
 
 .plant-card {
   width: 100%;
-  height: 58px;
-  margin-bottom: 8px;
+  padding: 8px 10px;
   border: none;
-  border-radius: 15px;
-  background: #de9572;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  cursor: pointer;
+  border-radius: 13px;
+  background: #fff7df;
   color: #7a4144;
-  font-size: 17px;
-  transition: transform 0.15s ease, background 0.15s ease;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
 }
 
-.plant-card:last-child {
-  margin-bottom: 0;
-}
-
-.plant-card:hover,
 .plant-card.selected {
-  background: #e8b292;
-  transform: scale(1.02);
-}
-
-.plant-preview {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
+  background: #9fbc75;
+  color: #fff;
 }
 
 .tool-row {
