@@ -43,6 +43,12 @@ document.addEventListener("DOMContentLoaded", () => {
 let undoStack = [];
 let isRestoringState = false;
 
+let idleTimer = null;
+let isIdleMode = false;
+let idleTargetX = 0.62;
+let idleRotationSpeed = 0.003;
+const IDLE_DELAY = 10000;
+
   let tileMeshes = [];
   let tileStacks = {};
   let plantedItems = {};
@@ -1844,7 +1850,7 @@ if (confirmRemove) {
       if (savedListPopup) savedListPopup.classList.add("open");
     });
   }
-  
+
 if (rewindButton) {
   rewindButton.addEventListener("click", () => {
     undoLastAction();
@@ -1873,10 +1879,38 @@ if (rewindButton) {
     camera.lookAt(0, 0, 0);
   });
 
-  function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
+function resetIdleTimer() {
+  isIdleMode = false;
+
+  if (idleTimer) {
+    clearTimeout(idleTimer);
   }
 
-  animate();
+  idleTimer = setTimeout(() => {
+    isIdleMode = true;
+  }, IDLE_DELAY);
+}
+
+function updateIdleMode() {
+  if (!isIdleMode || !platform) return;
+
+  // smoothly move camera/platform to a nice upper viewing angle
+  platform.rotation.x += (idleTargetX - platform.rotation.x) * 0.025;
+
+  // slowly rotate all the way around
+  platform.rotation.y += idleRotationSpeed;
+}
+
+["mousedown", "mousemove", "wheel", "click", "touchstart", "keydown"].forEach((eventName) => {
+  document.addEventListener(eventName, resetIdleTimer);
 });
+
+resetIdleTimer();
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  updateIdleMode();
+
+  renderer.render(scene, camera);
+}
