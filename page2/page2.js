@@ -435,59 +435,96 @@ function createFlowerPlant(tileId) {
   const plant = new THREE.Group();
   plant.add(makeSoilBlob(tileId));
 
-  const stems = [
-    { x: 0, z: 0, h: 0.48 },
-    { x: 0.12, z: 0.08, h: 0.4 },
-    { x: -0.12, z: 0.06, h: 0.38 }
+  const flowerData = [
+    { x: 0, z: 0, h: 0.52, leanX: 0.02, leanZ: 0.02, scale: 1 },
+    { x: -0.16, z: 0.08, h: 0.42, leanX: -0.06, leanZ: 0.02, scale: 0.82 },
+    { x: 0.15, z: -0.08, h: 0.45, leanX: 0.06, leanZ: -0.02, scale: 0.88 }
   ];
 
-  stems.forEach((item, stemIndex) => {
-    const stem = makeStem(item.h, 0.018, materials.stem);
-    stem.position.set(item.x, 0.25, item.z);
-    stem.rotation.z = item.x * 0.6;
-    stem.rotation.x = item.z * -0.6;
+  flowerData.forEach((data, flowerIndex) => {
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.018, 0.024, data.h, 6),
+      materials.stem
+    );
+
+    stem.position.set(data.x, 0.25 + data.h / 2, data.z);
+    stem.rotation.z = data.leanX;
+    stem.rotation.x = -data.leanZ;
+    stem.castShadow = true;
+    stem.receiveShadow = true;
     plant.add(stem);
 
-    const flower = new THREE.Group();
-    flower.position.set(item.x, 0.25 + item.h, item.z);
+    const topX = data.x + data.leanX * 0.18;
+    const topZ = data.z + data.leanZ * 0.18;
+    const topY = 0.25 + data.h;
 
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2;
+    const flowerHead = new THREE.Group();
+    flowerHead.position.set(topX, topY, topZ);
+    flowerHead.scale.set(data.scale, data.scale, data.scale);
 
-      const petal = makeLowPolyLeaf(
-        0.14,
-        0.065,
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 7) * Math.PI * 2;
+
+      const petal = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.07, 0),
         i % 2 === 0 ? materials.flowerPetal : materials.flowerPetalLight
       );
 
       petal.position.set(
-        Math.cos(angle) * 0.04,
-        0,
-        Math.sin(angle) * 0.04
+        Math.cos(angle) * 0.075,
+        Math.sin(angle) * 0.018,
+        Math.sin(angle) * 0.075
       );
 
-      petal.rotation.set(-Math.PI / 2, 0, angle);
-      flower.add(petal);
+      petal.scale.set(1.25, 0.58, 0.9);
+      petal.rotation.set(0.25, angle, angle * 0.25);
+      petal.castShadow = true;
+      petal.receiveShadow = true;
+      flowerHead.add(petal);
     }
 
     const center = new THREE.Mesh(
-      new THREE.SphereGeometry(0.045, 7, 5),
+      new THREE.IcosahedronGeometry(0.055, 0),
       materials.flowerCenter
     );
 
     center.position.y = 0.01;
+    center.scale.set(1, 0.72, 1);
     center.castShadow = true;
-    flower.add(center);
+    center.receiveShadow = true;
+    flowerHead.add(center);
 
-    plant.add(flower);
+    flowerHead.rotation.x = 0.2;
+    flowerHead.rotation.y = flowerIndex * 0.35;
+    plant.add(flowerHead);
 
-    const leaf = makeLowPolyLeaf(0.18, 0.07, materials.leafLight);
-    leaf.position.set(item.x * 0.7, 0.42, item.z * 0.7);
-    leaf.rotation.set(-Math.PI / 2, 0, stemIndex * 1.8);
-    plant.add(leaf);
+    const leafCount = flowerIndex === 0 ? 3 : 2;
+
+    for (let i = 0; i < leafCount; i++) {
+      const side = i % 2 === 0 ? 1 : -1;
+      const leafHeight = 0.34 + i * 0.055;
+      const angle = flowerIndex * 1.3 + i * 1.7;
+
+      const leaf = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.075, 0),
+        i % 2 === 0 ? materials.leafLight : materials.leaf
+      );
+
+      leaf.position.set(
+        data.x + Math.cos(angle) * 0.075 * side,
+        leafHeight,
+        data.z + Math.sin(angle) * 0.075
+      );
+
+      leaf.scale.set(1.25, 0.38, 0.68);
+      leaf.rotation.set(0.55, angle, side * 0.55);
+      leaf.castShadow = true;
+      leaf.receiveShadow = true;
+      plant.add(leaf);
+    }
   });
 
-  plant.scale.set(0.9, 0.9, 0.9);
+  plant.scale.set(0.88, 0.88, 0.88);
   return plant;
 }
 
