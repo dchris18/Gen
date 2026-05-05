@@ -351,21 +351,6 @@ function makeCylinder(height, radius, material, x, y, z, rx = 0, rz = 0) {
   return stem;
 }
 
-  function makeIco(size, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) {
-  const mesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(size, 0),
-    material
-  );
-
-  mesh.position.set(x, y, z);
-  mesh.scale.set(sx, sy, sz);
-  mesh.rotation.set(rx, ry, rz);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-
-  return mesh;
-}
-
 function makeSimpleStem(height, radius, material, x, y, z, rx = 0, rz = 0) {
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(radius * 0.75, radius, height, 6),
