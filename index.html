@@ -3,43 +3,113 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spring April 16</title>
+    <title>Build A Garden</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
+
   <body>
     <main class="screen">
-  <div class="top-pill"></div>
-  <h1 class="title">Spring April 16</h1>
 
-  <a href="./page1/page1.html" class="book-link">
-    <img class="asset book" src="./photos/Book icon.png" alt="Book icon" />
-  </a>
+      <header class="top-bar">
+  <div class="top-title">gen garden</div>
+  <div class="top-datetime"></div>
+</header>
 
-  <img class="asset watering-can" src="./photos/Watering Can.png" alt="Watering Can" />
-  <img class="asset trowel" src="./photos/Trowel.png" alt="Trowel" />
-  <img class="asset shelf" src="./photos/Shelf L.png" alt="Shelf" />
+      <section class="planner-board" aria-label="Garden planner board">
+        <div id="three-platform"></div>
 
-<a href="./page2/" class="map-link">
-  <img class="asset map" src="./photos/Map icon.png" alt="Map icon" />
-</a>
+        <button class="bookmark-button" aria-label="Bookmark">
+          <img src="./photos/Bookmark.png" alt="Bookmark" />
+        </button>
 
-<a href="./page3/" class="globe-link">
-  <img class="asset globe" src="./photos/Globe icon.png" alt="Globe icon" />
-</a>
+        <button class="save-button" aria-label="Save">
+          <img src="./photos/Save.png" alt="Save" />
+        </button>
 
-<div class="plant-cluster">
-  <img src="photos/Onion.png" alt="Onion" class="plant onion">
-  <img src="photos/Potato.png" alt="Potato" class="plant potato">
-  <img src="photos/Carrot.png" alt="Carrot" class="plant carrot">
+<button class="rewind-button" aria-label="Undo">
+  <img src="./photos/Rewind.png" alt="Undo" />
+</button>
+
+<button class="tile-remove-button" aria-label="Remove Tile">
+  <img src="./photos/Remove Tile.png" alt="Remove Tile" />
+</button>
+
+<button class="tile-menu-button" aria-label="Add Tile">
+  <img src="./photos/Tile.png" alt="Add Tile" />
+</button>
+
+<button class="eye-button" aria-label="View mode">
+  <img src="./photos/View.png" alt="View mode" />
+</button>
+
+        <div class="grid-menu">
+          <button data-grid="3">3x3</button>
+          <button data-grid="6">6x6</button>
+          <button data-grid="9">9x9</button>
+        </div>
+      </section>
+
+<div class="plant-menu">
+  <h2>Choose Plant</h2>
+
+  <button class="plant-category-btn" data-category="greenery">🌿 Greenery</button>
+  <div class="plant-category-list" data-list="greenery">
+    <button class="plant-card" data-plant="fern">Fern</button>
+    <button class="plant-card" data-plant="sprout">Sprout</button>
+    <button class="plant-card" data-plant="clover">Clover</button>
+    <button class="plant-card" data-plant="hosta">Hosta</button>
+    <button class="plant-card" data-plant="grass">Spring Grass</button>
+  </div>
+
+  <button class="plant-category-btn" data-category="flowers">🌸 Flowers</button>
+  <div class="plant-category-list" data-list="flowers">
+    <button class="plant-card" data-plant="flower">Pink Flower</button>
+    <button class="plant-card" data-plant="daffodil">Daffodil</button>
+    <button class="plant-card" data-plant="iris">Iris</button>
+    <button class="plant-card" data-plant="tulip">Tulip</button>
+    <button class="plant-card" data-plant="dogwood">Dogwood</button>
+  </div>
+
+  <button class="plant-category-btn" data-category="crops">🥕 Crops</button>
+  <div class="plant-category-list" data-list="crops">
+    <button class="plant-card" data-plant="tomato">Tomato</button>
+    <button class="plant-card" data-plant="carrot">Carrot</button>
+    <button class="plant-card" data-plant="potato">Potato</button>
+    <button class="plant-card" data-plant="strawberry">Strawberry</button>
+    <button class="plant-card" data-plant="lettuce">Lettuce</button>
+    <button class="plant-card" data-plant="peas">Peas</button>
+    <button class="plant-card" data-plant="radish">Radish</button>
+  </div>
 </div>
+        <h2>Remove Tile</h2>
+        <div class="remove-actions">
+          <button class="back-remove">Back</button>
+          <button class="confirm-remove">Confirm</button>
+        </div>
+      </div>
 
-  <div class="bottom-pill"></div>
+      <div class="name-save-popup">
+        <h2>Name Save</h2>
+        <input class="save-name-input" type="text" placeholder="Garden name" />
+        <div class="remove-actions">
+          <button class="cancel-save">Back</button>
+          <button class="confirm-save">Save</button>
+        </div>
+      </div>
 
-  <img class="asset nav bell" src="./photos/Bell.png" alt="Bell" />
-  <img class="asset nav home" src="./photos/Home.png" alt="Home" />
-  <img class="asset nav chat" src="./photos/Chat.png" alt="Chat" />
-</main>
+      <div class="saved-list-popup">
+        <h2>Saved Gardens</h2>
+        <div class="saved-list"></div>
+        <button class="close-saves">Back</button>
+      </div>
 
-<script src="./script.js"></script>
+      <div class="tool-row">
+        <button class="tool-btn tool-pot" aria-label="Pot">
+          <img src="./photos/Pot.png" alt="Pot" />
+        </button>
+      </div>
+    </main>
+
+    <script type="module" src="./page2.js"></script>
   </body>
 </html>
