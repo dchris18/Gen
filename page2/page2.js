@@ -2530,32 +2530,41 @@ container.addEventListener("pointercancel", (e) => {
   addedThisDrag = [];
 });
 
-  container.addEventListener("click", (e) => {
-    if (selectedTool === "remove") return;
-    if (selectedTool === "add") return;
-    if (didDrag) return;
+container.addEventListener("click", (e) => {
+  if (selectedTool === "add") return;
+  if (didDrag) return;
 
-    updateMouseFromEvent(e);
+  updateMouseFromEvent(e);
 
-    plantRaycaster.setFromCamera(mouse, camera);
+  plantRaycaster.setFromCamera(mouse, camera);
 
-    const plantHits = plantRaycaster.intersectObjects(
-      Object.values(plantedItems).filter(Boolean),
-      true
-    );
+  const plantHits = plantRaycaster.intersectObjects(
+    Object.values(plantedItems).filter(Boolean),
+    true
+  );
 
-    if (plantHits.length > 0) {
-      const tileId = plantHits[0].object.userData.tileId;
-      const plant = plantedItems[tileId];
+  if (plantHits.length > 0) {
+    const tileId = plantHits[0].object.userData.tileId;
 
-      if (plant) {
-        plant.rotation.y += Math.PI / 4;
-      }
-
+    if (selectedTool === "remove") {
+      saveUndoState();
+      removePlantByTileId(tileId);
+      rebuildSoilConnectors();
       return;
     }
 
-    raycaster.setFromCamera(mouse, camera);
+    const plant = plantedItems[tileId];
+
+    if (plant) {
+      plant.rotation.y += Math.PI / 4;
+    }
+
+    return;
+  }
+
+  if (selectedTool === "remove") return;
+
+  raycaster.setFromCamera(mouse, camera);
 
     const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
     const hits = raycaster.intersectObjects(visibleTiles);
@@ -2767,6 +2776,7 @@ if (saveButton && nameSavePopup) {
 if (bookmarkButton && savedListPopup) {
   bookmarkButton.addEventListener("click", () => {
     closeAllPopups();
+    renderSavedGardens();
     savedListPopup.classList.add("open");
   });
 }
