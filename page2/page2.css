@@ -1,6 +1,6 @@
 @font-face {
-  font-family: 'PPNeueMontreal';
-  src: url('../fonts/PPNeueMontreal-Bold.otf') format('opentype');
+  font-family: 'ABCDiatypeRounded';
+  src: url('./fonts/ABCDiatypeRounded-Bold-Trial.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
 }
@@ -15,7 +15,17 @@ body {
   display: grid;
   place-items: center;
   background: #1d1d1d;
-  font-family: 'PPNeueMontreal', sans-serif;
+  font-family: 'ABCDiatypeRounded', sans-serif;
+}
+
+button,
+input,
+.top-bar,
+.plant-menu,
+.grid-menu,
+.name-save-popup,
+.saved-list-popup {
+  font-family: 'ABCDiatypeRounded', sans-serif;
 }
 
 button {
@@ -484,4 +494,63 @@ button {
   left: auto !important;
   bottom: auto !important;
   z-index: 1001;
+}
+
+.bookmark-button img,
+.save-button img,
+.eye-button img,
+.tile-menu-button img,
+.tile-remove-button img,
+.rewind-button img,
+.tool-pot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.bookmark-button,
+.save-button {
+  overflow: hidden;
+}
+
+.bookmark-button img,
+.save-button img {
+  transform-origin: center;
+}
+
+.eye-button {
+  overflow: hidden;
+}
+
+.eye-button img {
+  transform-origin: center;
+}
+
+.eye-button {
+  width: 80px;
+
+.eye-button {
+  position: absolute;
+  left: 12px;
+  bottom: 25px;
+  top: auto !important;
+  width: 72px;
+  height: 44px;
+  border: none;
+  background: transparent !important;
+  padding: 0;
+  cursor: pointer;
+  z-index: 20;
+  overflow: visible;
+}
+
+.eye-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: transparent !important;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.12));
 }
