@@ -5,6 +5,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 document.addEventListener("DOMContentLoaded", () => {
   const eyeButton = document.querySelector(".eye-button");
   const gridMenu = document.querySelector(".grid-menu");
+  const rewindButton = document.querySelector(".rewind-button");
   const gridButtons = document.querySelectorAll("[data-grid]");
   const toolButtons = document.querySelectorAll(".tool-btn");
   const potButton = document.querySelector(".tool-pot");
@@ -38,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentSize = 6;
   let selectedSquare = null;
+
+let undoStack = [];
+let isRestoringState = false;
 
   let tileMeshes = [];
   let tileStacks = {};
@@ -814,8 +818,109 @@ function createTomatoPlant(tileId) {
     }
   }
 
-  function plantOnSquare(tile) {
-    if (!selectedPlant || tile.userData.removed) return;
+function captureGardenState() {
+  return {
+    tiles: tileMeshes.map((tile) => ({
+      row: tile.userData.row,
+      col: tile.userData.col,
+      level: tile.userData.level,
+      removed: tile.userData.removed
+    })),
+    plants: Object.keys(plantedItems)
+      .filter((tileId) => plantedItems[tileId])
+      .map((tileId) => ({
+        tileId,
+        type: plantedItems[tileId].userData.plantType,
+        rotationY: plantedItems[tileId].rotation.y
+      })),
+    removedTiles: [...removedTileIds],
+    rotation: {
+      x: platform.rotation.x,
+      y: platform.rotation.y
+    },
+    cameraZ: camera.position.z
+  };
+}
+
+function saveUndoState() {
+  if (isRestoringState || !platform) return;
+
+  undoStack.push(captureGardenState());
+
+  if (undoStack.length > 40) {
+    undoStack.shift();
+  }
+}
+
+function restoreGardenState(state) {
+  if (!state || !platform) return;
+
+  isRestoringState = true;
+
+  tileMeshes.forEach((tile) => {
+    platform.remove(tile.userData.tileGroup);
+  });
+
+  tileMeshes = [];
+  tileStacks = {};
+  plantedItems = {};
+  removedTileIds = [...state.removedTiles];
+
+  state.tiles.forEach((tileData) => {
+    const tile = createTile(tileData.row, tileData.col, tileData.level);
+    platform.add(tile.userData.tileGroup);
+
+    if (tileData.removed) {
+      tile.userData.removed = true;
+      tile.userData.visibleTile.visible = false;
+
+      tile.userData.tileLines.forEach((line) => {
+        line.visible = false;
+      });
+    }
+  });
+
+  state.plants.forEach((plantData) => {
+    const tile = tileMeshes.find((item) => {
+      return item.userData.tileId === plantData.tileId;
+    });
+
+    if (tile && !tile.userData.removed) {
+      const plant = createPlant(plantData.type, plantData.tileId);
+      markPlantPieces(plant, plantData.tileId);
+
+      plant.rotation.y = plantData.rotationY;
+
+      tile.parent.add(plant);
+      plantedItems[plantData.tileId] = plant;
+    }
+  });
+
+  platform.rotation.x = state.rotation.x;
+  platform.rotation.y = state.rotation.y;
+
+  camera.position.z = state.cameraZ;
+  camera.lookAt(0, 0, 0);
+
+  clearRemoveSelection();
+  selectedSquare = null;
+
+  if (removePopup) removePopup.classList.remove("open");
+
+  isRestoringState = false;
+}
+
+function undoLastAction() {
+  if (undoStack.length === 0) return;
+
+  const previousState = undoStack.pop();
+  restoreGardenState(previousState);
+}
+
+function plantOnSquare(tile) {
+  if (!selectedPlant || tile.userData.removed) return;
+
+  saveUndoState();
 
     const tileId = tile.userData.tileId;
 
@@ -1105,7 +1210,11 @@ function createTomatoPlant(tileId) {
 
     if (addedThisDrag.includes(dragKey)) return;
 
-    const addedTile = addTileAtCoord(coord.row, coord.col);
+if (addedThisDrag.length === 0) {
+  saveUndoState();
+}
+
+const addedTile = addTileAtCoord(coord.row, coord.col);
 
     if (addedTile) {
       addedThisDrag.push(dragKey);
@@ -1511,9 +1620,11 @@ function createTomatoPlant(tileId) {
     });
   }
 
-  if (confirmRemove) {
-    confirmRemove.addEventListener("click", () => {
-      if (removeSelectedTiles.length === 0) return;
+if (confirmRemove) {
+  confirmRemove.addEventListener("click", () => {
+    if (removeSelectedTiles.length === 0) return;
+
+    saveUndoState();
 
       removeSelectedTiles.forEach((tile) => {
         hideTile(tile);
@@ -1733,6 +1844,12 @@ function createTomatoPlant(tileId) {
       if (savedListPopup) savedListPopup.classList.add("open");
     });
   }
+  
+if (rewindButton) {
+  rewindButton.addEventListener("click", () => {
+    undoLastAction();
+  });
+}
 
   if (closeSaves) {
     closeSaves.addEventListener("click", () => {
