@@ -2486,9 +2486,9 @@ if (activePointers.size === 2) {
   return;
 }
 
-  if (selectedTool === "add" && !toolPointerDown) {
-    updateAddPreview(e);
-  }
+if (selectedTool === "add" && !toolPointerDown) {
+  updateAddPreview(e);
+}
 
   if (toolPointerDown && selectedTool === "add") {
     didDrag = true;
@@ -2524,6 +2524,17 @@ container.addEventListener("pointerup", (e) => {
 
   activePointers.delete(e.pointerId);
   lastPinchDistance = null;
+
+if (toolPointerDown && selectedTool === "add") {
+  toolPointerDown = false;
+  addedThisDrag = [];
+
+  if (addPreview) {
+    addPreview.visible = false;
+  }
+
+  return;
+}
 
 if (toolPointerDown && selectedTool === "remove") {
   toolPointerDown = false;
