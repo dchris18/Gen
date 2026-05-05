@@ -1245,7 +1245,7 @@ function createHostaPlant(tileId) {
 
     plant.add(makeCylinder(0.18, 0.012, materials.stemLight, x, 0.25, z, Math.sin(a) * -0.25, Math.cos(a) * 0.25));
     plant.add(makeIco(0.085, i % 2 === 0 ? materials.leafLight : materials.leaf, Math.cos(a) * 0.16, 0.39, Math.sin(a) * 0.16, 1.55, 0.28, 0.9, 0.35, a, 0));
-  });
+  }
 
   plant.scale.set(0.9, 0.9, 0.9);
   return plant;
