@@ -2984,20 +2984,3 @@ function animate() {
 
 animate();
 });
-
-.eye-button {
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #ece8c9 !important;
-}
-
-.eye-button img {
-  width: 150% !important;
-  height: 150% !important;
-  object-fit: cover !important;
-  object-position: center;
-  transform: translate(-17%, -17%) scale(1.05);
-  mix-blend-mode: multiply;
-}

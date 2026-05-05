@@ -268,12 +268,6 @@ button {
   display: block;
 }
 
-.eye-button img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
 
 .grid-menu {
   position: absolute;
@@ -519,42 +513,6 @@ button {
   transform-origin: center;
 }
 
-.eye-button {
-  overflow: hidden;
-}
-
-.eye-button img {
-  transform-origin: center;
-}
-
-.eye-button {
-  width: 80px;
-
-.eye-button {
-  position: absolute;
-  left: 12px;
-  bottom: 25px;
-  top: auto !important;
-  width: 72px;
-  height: 44px;
-  border: none;
-  background: transparent !important;
-  padding: 0;
-  cursor: pointer;
-  z-index: 20;
-  overflow: visible;
-}
-
-.eye-button img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  background: transparent !important;
-  mix-blend-mode: multiply;
-  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.12));
-}
-
 .tool-pot {
   width: 76px;
   height: 76px;
@@ -567,18 +525,36 @@ button {
 }
 
 .eye-button {
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 50%;
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 30;
   overflow: hidden;
-  background: #ece8c9 !important;
+  border-radius: 50%;
 }
 
+/* THIS removes the black/white background visually */
 .eye-button img {
-  width: 150% !important;
-  height: 150% !important;
-  object-fit: cover !important;
-  object-position: center;
-  transform: translate(-17%, -17%) scale(1.05);
-  mix-blend-mode: multiply;
+  width: 180%;
+  height: 180%;
+  object-fit: cover;
+  transform: translate(-40%, -40%);
+  mix-blend-mode: screen;
+}
+
+.tool-pot {
+  width: 76px;
+  height: 76px;
+}
+
+.tool-pot img {
+  width: 76px;
+  height: auto;
+  object-fit: contain;
 }
