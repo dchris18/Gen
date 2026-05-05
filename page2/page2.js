@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const tileMenuButton = document.querySelector(".tile-menu-button");
 const tileRemoveButton = document.querySelector(".tile-remove-button");
-
+const removePopup = null;
 
   const saveButton = document.querySelector(".save-button");
   const bookmarkButton = document.querySelector(".bookmark-button");
