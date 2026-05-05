@@ -251,8 +251,10 @@ button {
 
 .grid-menu {
   position: absolute;
-  left: 20px;
-  top: 150px;
+  right: 20px;
+  top: 95px;
+  left: auto;
+  bottom: auto;
   padding: 7px;
   border-radius: 14px;
   background: #f0dfb8;
@@ -278,8 +280,10 @@ button {
 
 .plant-menu {
   position: absolute;
-  left: 20px;
-  top: 150px;
+  right: 20px;
+  top: 95px;
+  left: auto;
+  bottom: auto;
   width: 244px;
   max-height: calc(100vh - 260px);
   overflow-y: auto;
@@ -435,6 +439,18 @@ button {
 .tool-pot img {
   width: 76px;
   height: auto;
+}
+
+.name-save-popup,
+.saved-list-popup,
+.plant-menu,
+.grid-menu {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 60;
 }
 
 .tool-shears img {

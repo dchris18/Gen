@@ -1504,7 +1504,6 @@ function createRadishPlant(tileId) {
 function closeAllPopups() {
   if (plantMenu) plantMenu.classList.remove("open");
   if (gridMenu) gridMenu.classList.remove("open");
-  if (removePopup) removePopup.classList.remove("open");
   if (nameSavePopup) nameSavePopup.classList.remove("open");
   if (savedListPopup) savedListPopup.classList.remove("open");
 }
@@ -2776,7 +2775,11 @@ if (saveButton && nameSavePopup) {
 if (bookmarkButton && savedListPopup) {
   bookmarkButton.addEventListener("click", () => {
     closeAllPopups();
-    renderSavedGardens();
+
+    if (typeof renderSavedGardens === "function") {
+      renderSavedGardens();
+    }
+
     savedListPopup.classList.add("open");
   });
 }
