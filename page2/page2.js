@@ -1648,17 +1648,48 @@ function hasPlantAt(row, col, level) {
   return Boolean(plantedItems[tileId]);
 }
 
-function makeSoilConnector(width, depth, x, z, y = 0.252) {
-  const connector = new THREE.Mesh(
-    new THREE.BoxGeometry(width, 0.024, depth),
-    materials.soilDark
-  );
+function makeSoilPatch(width, depth, x, z, y, seedText) {
+  const group = new THREE.Group();
+  const rand = seededRandom(seedText);
 
-  connector.position.set(x, y, z);
-  connector.castShadow = true;
-  connector.receiveShadow = true;
+  for (let i = 0; i < 5; i++) {
+    const material =
+      i % 3 === 0
+        ? materials.soilDark
+        : i % 2 === 0
+        ? materials.soilLight
+        : materials.soil;
 
-  return connector;
+    const patch = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.16 + rand() * 0.05,
+        0.2 + rand() * 0.06,
+        0.028,
+        7
+      ),
+      material
+    );
+
+    patch.position.set(
+      x + (rand() - 0.5) * width,
+      y + i * 0.003,
+      z + (rand() - 0.5) * depth
+    );
+
+    patch.scale.set(
+      1.2 + rand() * 0.45,
+      1,
+      0.8 + rand() * 0.35
+    );
+
+    patch.rotation.y = rand() * Math.PI * 2;
+    patch.castShadow = true;
+    patch.receiveShadow = true;
+
+    group.add(patch);
+  }
+
+  return group;
 }
 
 function rebuildSoilConnectors() {
@@ -1667,6 +1698,70 @@ function rebuildSoilConnectors() {
   if (soilConnectorGroup) {
     platform.remove(soilConnectorGroup);
   }
+
+  soilConnectorGroup = new THREE.Group();
+
+  Object.keys(plantedItems).forEach((tileId) => {
+    const plant = plantedItems[tileId];
+    if (!plant) return;
+
+    const tile = getTileById(tileId);
+    if (!tile || tile.userData.removed) return;
+
+    const row = tile.userData.row;
+    const col = tile.userData.col;
+    const level = tile.userData.level;
+
+    const baseX = col - currentSize / 2 + 0.5;
+    const baseZ = row - currentSize / 2 + 0.5;
+    const baseY = level * 0.35 + 0.265;
+
+    if (hasPlantAt(row, col + 1, level)) {
+      soilConnectorGroup.add(
+        makeSoilPatch(
+          0.72,
+          0.48,
+          baseX + 0.5,
+          baseZ,
+          baseY,
+          `soil-right-${row}-${col}-${level}`
+        )
+      );
+    }
+
+    if (hasPlantAt(row + 1, col, level)) {
+      soilConnectorGroup.add(
+        makeSoilPatch(
+          0.48,
+          0.72,
+          baseX,
+          baseZ + 0.5,
+          baseY,
+          `soil-down-${row}-${col}-${level}`
+        )
+      );
+    }
+
+    if (
+      hasPlantAt(row, col + 1, level) &&
+      hasPlantAt(row + 1, col, level) &&
+      hasPlantAt(row + 1, col + 1, level)
+    ) {
+      soilConnectorGroup.add(
+        makeSoilPatch(
+          0.82,
+          0.82,
+          baseX + 0.5,
+          baseZ + 0.5,
+          baseY + 0.003,
+          `soil-middle-${row}-${col}-${level}`
+        )
+      );
+    }
+  });
+
+  platform.add(soilConnectorGroup);
+}
 
   soilConnectorGroup = new THREE.Group();
 
