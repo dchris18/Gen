@@ -568,3 +568,54 @@ button {
   left: 18px !important;
   bottom: 158px !important;
 }
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  background: #7f8d7b;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  animation: splashFade 0.9s ease forwards;
+  animation-delay: 2.4s;
+}
+
+.splash-content {
+  display: grid;
+  place-items: center;
+  color: #ece8c9;
+  text-align: center;
+  transform: translateY(-2vh);
+}
+
+.splash-flower {
+  font-size: clamp(150px, 38vw, 360px);
+  line-height: 0.85;
+  animation: flowerSpin 2.4s ease-in-out forwards;
+}
+
+.splash-title {
+  font-family: 'ABCDiatypeRounded', sans-serif;
+  font-size: clamp(46px, 10vw, 120px);
+  margin-top: 18px;
+  color: #ece8c9;
+  letter-spacing: 0.5px;
+}
+
+@keyframes flowerSpin {
+  from {
+    transform: rotate(0deg) scale(0.94);
+  }
+
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes splashFade {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
