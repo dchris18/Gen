@@ -2669,6 +2669,7 @@ container.addEventListener("click", (e) => {
 
   updateMouseFromEvent(e);
 
+  // check for plants first
   plantRaycaster.setFromCamera(mouse, camera);
 
   const plantHits = plantRaycaster.intersectObjects(
@@ -2679,37 +2680,46 @@ container.addEventListener("click", (e) => {
   if (plantHits.length > 0) {
     const tileId = plantHits[0].object.userData.tileId;
 
-if (selectedTool === "remove") {
-  saveUndoState();
-  removePlantByTileId(tileId);
-  rebuildSoilConnectors();
-  return;
-}
-
-    const plant = plantedItems[tileId];
-
-    if (plant) {
-      plant.rotation.y += Math.PI / 4;
+    if (selectedTool === "remove") {
+      saveUndoState();
+      removePlantByTileId(tileId);
+      rebuildSoilConnectors();
+      return;
     }
 
     return;
   }
 
-  if (selectedTool === "remove") return;
+  // only remove tile if no plant was clicked
+  if (selectedTool === "remove") {
+    raycaster.setFromCamera(mouse, camera);
 
-  raycaster.setFromCamera(mouse, camera);
+    const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
+    const hits = raycaster.intersectObjects(visibleTiles);
 
-  const visibleTiles = tileMeshes.filter((tile) => !tile.userData.removed);
-  const hits = raycaster.intersectObjects(visibleTiles);
+    if (hits.length > 0) {
+      const tile = hits[0].object;
 
-  if (hits.length > 0) {
-    const clickedTile = hits[0].object;
+      saveUndoState();
 
-    setSelectedSquare(clickedTile);
+      tile.userData.removed = true;
+      tile.userData.visibleTile.visible = false;
 
-    if (selectedTool === "plant" && selectedPlant) {
-      plantOnSquare(clickedTile);
+      tile.userData.tileLines.forEach((line) => {
+        line.visible = false;
+      });
+
+      const tileId = tile.userData.tileId;
+      removePlantByTileId(tileId);
+
+      if (!removedTileIds.includes(tileId)) {
+        removedTileIds.push(tileId);
+      }
+
+      rebuildSoilConnectors();
     }
+
+    return;
   }
 });
 
