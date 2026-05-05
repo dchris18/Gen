@@ -287,18 +287,13 @@ if (potButton && plantMenu) {
       const list = plantMenu.querySelector(`[data-list="${category}"]`);
       const isAlreadyOpen = list && list.classList.contains("open");
 
-      plantMenu.querySelectorAll(".plant-category-list").forEach((item) => {
-        item.classList.remove("open");
-      });
-
-      plantMenu.querySelectorAll(".plant-category-btn").forEach((item) => {
-        item.classList.remove("active");
-      });
-
       if (!isAlreadyOpen && list) {
         list.classList.add("open");
         categoryButton.classList.add("active");
-      }
+      } else if (list) {
+  list.classList.remove("open");
+  categoryButton.classList.remove("active");
+}
 
       return;
     }
