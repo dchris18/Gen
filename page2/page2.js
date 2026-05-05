@@ -1763,57 +1763,6 @@ function rebuildSoilConnectors() {
   platform.add(soilConnectorGroup);
 }
 
-  soilConnectorGroup = new THREE.Group();
-
-  Object.keys(plantedItems).forEach((tileId) => {
-    const plant = plantedItems[tileId];
-    if (!plant) return;
-
-    const tile = getTileById(tileId);
-    if (!tile || tile.userData.removed) return;
-
-    const row = tile.userData.row;
-    const col = tile.userData.col;
-    const level = tile.userData.level;
-
-    const baseX = col - currentSize / 2 + 0.5;
-    const baseZ = row - currentSize / 2 + 0.5;
-    const baseY = level * 0.35 + 0.252;
-
-    // Connect right neighbor
-    if (hasPlantAt(row, col + 1, level)) {
-      soilConnectorGroup.add(
-        makeSoilConnector(0.42, 0.34, baseX + 0.5, baseZ, baseY)
-      );
-    }
-
-    // Connect bottom neighbor
-    if (hasPlantAt(row + 1, col, level)) {
-      soilConnectorGroup.add(
-        makeSoilConnector(0.34, 0.42, baseX, baseZ + 0.5, baseY)
-      );
-    }
-
-    // Fill middle if this tile is top-left of a 2x2 planted block
-    if (
-      hasPlantAt(row, col + 1, level) &&
-      hasPlantAt(row + 1, col, level) &&
-      hasPlantAt(row + 1, col + 1, level)
-    ) {
-      soilConnectorGroup.add(
-        makeSoilConnector(0.48, 0.48, baseX + 0.5, baseZ + 0.5, baseY + 0.002)
-      );
-    }
-  });
-
-  platform.add(soilConnectorGroup);
-}
-
-function plantOnSquare(tile) {
-  if (!selectedPlant || tile.userData.removed) return;
-
-  saveUndoState();
-
     const tileId = tile.userData.tileId;
 
     removePlantFromSquare(tile);
