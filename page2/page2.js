@@ -290,8 +290,6 @@ if (tileMenuButton) {
   tileMenuButton.addEventListener("click", () => {
     selectedTool = "add";
 
-    toolButtons.forEach((item) => item.classList.remove("selected"));
-
     if (plantMenu) plantMenu.classList.remove("open");
     if (removePopup) removePopup.classList.remove("open");
     if (addPreview) addPreview.visible = false;
@@ -303,8 +301,6 @@ if (tileMenuButton) {
 if (tileRemoveButton) {
   tileRemoveButton.addEventListener("click", () => {
     selectedTool = "remove";
-
-    toolButtons.forEach((item) => item.classList.remove("selected"));
 
     if (plantMenu) plantMenu.classList.remove("open");
     if (addPreview) addPreview.visible = false;
