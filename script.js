@@ -126,7 +126,7 @@ let lastPinchDistance = null;
       flatShading: true
     }),
     soilDark: new THREE.MeshStandardMaterial({
-      color: 0x4f3326,
+      color: 0x6f4a36,
       roughness: 0.95,
       flatShading: true
     }),
@@ -1748,6 +1748,21 @@ function undoLastAction() {
   restoreGardenState(previousState);
 }
 
+function getPlantTileIdFromMouseEvent(e) {
+  updateMouseFromEvent(e);
+
+  plantRaycaster.setFromCamera(mouse, camera);
+
+  const plantHits = plantRaycaster.intersectObjects(
+    Object.values(plantedItems).filter(Boolean),
+    true
+  );
+
+  if (plantHits.length === 0) return null;
+
+  return plantHits[0].object.userData.tileId;
+}
+
 function getTileById(tileId) {
   return tileMeshes.find((tile) => tile.userData.tileId === tileId);
 }
@@ -1761,39 +1776,40 @@ function makeSoilPatch(width, depth, x, z, y, seedText) {
   const group = new THREE.Group();
   const rand = seededRandom(seedText);
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 4; i++) {
     const material =
       i % 3 === 0
-        ? materials.soilDark
+        ? materials.soil
         : i % 2 === 0
         ? materials.soilLight
-        : materials.soil;
+        : materials.soilDark;
 
     const patch = new THREE.Mesh(
       new THREE.CylinderGeometry(
-        0.16 + rand() * 0.05,
-        0.2 + rand() * 0.06,
-        0.028,
+        0.13 + rand() * 0.04,
+        0.17 + rand() * 0.05,
+        0.018,
         7
       ),
       material
     );
 
     patch.position.set(
-      x + (rand() - 0.5) * width,
-      y + i * 0.003,
-      z + (rand() - 0.5) * depth
+      x + (rand() - 0.5) * width * 0.72,
+      y + 0.01 + i * 0.006,
+      z + (rand() - 0.5) * depth * 0.72
     );
 
     patch.scale.set(
-      1.2 + rand() * 0.45,
+      1.05 + rand() * 0.25,
       1,
-      0.8 + rand() * 0.35
+      0.78 + rand() * 0.2
     );
 
     patch.rotation.y = rand() * Math.PI * 2;
     patch.castShadow = true;
     patch.receiveShadow = true;
+    patch.renderOrder = 2;
 
     group.add(patch);
   }
@@ -2499,8 +2515,17 @@ container.addEventListener("pointerdown", (e) => {
     return;
   }
 
-  if (selectedTool === "remove") {
-    const tile = getTileFromMouseEvent(e);
+if (selectedTool === "remove") {
+  const plantTileId = getPlantTileIdFromMouseEvent(e);
+
+  if (plantTileId) {
+    saveUndoState();
+    removePlantByTileId(plantTileId);
+    rebuildSoilConnectors();
+    return;
+  }
+
+  const tile = getTileFromMouseEvent(e);
 
     if (!tile) {
       dragging = true;
