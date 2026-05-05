@@ -524,30 +524,6 @@ button {
   object-fit: contain;
 }
 
-.eye-button {
-  position: absolute;
-  left: 18px;
-  bottom: 18px;
-  width: 56px;
-  height: 56px;
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  z-index: 30;
-  overflow: hidden;
-  border-radius: 50%;
-}
-
-/* THIS removes the black/white background visually */
-.eye-button img {
-  width: 180%;
-  height: 180%;
-  object-fit: cover;
-  transform: translate(-40%, -40%);
-  mix-blend-mode: screen;
-}
-
 .tool-pot {
   width: 76px;
   height: 76px;
@@ -557,4 +533,38 @@ button {
   width: 76px;
   height: auto;
   object-fit: contain;
+}
+
+.eye-button {
+  position: absolute !important;
+  left: 18px !important;
+  bottom: 18px !important;
+  width: 58px !important;
+  height: 58px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  z-index: 30 !important;
+  overflow: visible !important;
+  border-radius: 0 !important;
+}
+
+.eye-button img {
+  width: 58px !important;
+  height: 58px !important;
+  object-fit: contain !important;
+  display: block !important;
+  transform: none !important;
+  mix-blend-mode: screen;
+}
+
+/* move the icons above it up */
+.tile-menu-button {
+  left: 18px !important;
+  bottom: 88px !important;
+}
+
+.tile-remove-button {
+  left: 18px !important;
+  bottom: 158px !important;
 }
