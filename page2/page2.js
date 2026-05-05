@@ -176,6 +176,14 @@ const IDLE_DELAY = 10000;
       roughness: 0.62,
       flatShading: true
     }),
+    yellowPetal: new THREE.MeshStandardMaterial({ color: 0xf2d35d, roughness: 0.58, flatShading: true }),
+purplePetal: new THREE.MeshStandardMaterial({ color: 0x7650a8, roughness: 0.58, flatShading: true }),
+whitePetal: new THREE.MeshStandardMaterial({ color: 0xf4ead4, roughness: 0.62, flatShading: true }),
+tulipRed: new THREE.MeshStandardMaterial({ color: 0xd85b58, roughness: 0.6, flatShading: true }),
+strawberry: new THREE.MeshStandardMaterial({ color: 0xd94a45, roughness: 0.6, flatShading: true }),
+lettuce: new THREE.MeshStandardMaterial({ color: 0xa7c957, roughness: 0.62, flatShading: true }),
+peaPod: new THREE.MeshStandardMaterial({ color: 0x6fb84f, roughness: 0.65, flatShading: true }),
+radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatShading: true }),
     tulipRed: new THREE.MeshStandardMaterial({
       color: 0xd85b58,
       roughness: 0.6,
@@ -270,22 +278,69 @@ const IDLE_DELAY = 10000;
     });
   }
 
-  plantCards.forEach((card) => {
-    card.addEventListener("click", () => {
-      plantCards.forEach((item) => item.classList.remove("selected"));
-      card.classList.add("selected");
+  if (plantMenu) {
+  plantMenu.addEventListener("click", (e) => {
+    const categoryButton = e.target.closest(".plant-category-btn");
 
-      selectedPlant = card.dataset.plant;
-      selectedTool = "plant";
+    if (categoryButton) {
+      const category = categoryButton.dataset.category;
+      const list = plantMenu.querySelector(`[data-list="${category}"]`);
 
-      if (addPreview) addPreview.visible = false;
-      if (plantMenu) plantMenu.classList.remove("open");
-
-      if (selectedSquare && !selectedSquare.userData.removed) {
-        plantOnSquare(selectedSquare);
+      if (list) {
+        list.classList.toggle("open");
       }
+
+      return;
+    }
+
+    const card = e.target.closest(".plant-card");
+
+    if (!card) return;
+
+    plantMenu.querySelectorAll(".plant-card").forEach((item) => {
+      item.classList.remove("selected");
     });
+
+    card.classList.add("selected");
+
+    selectedPlant = card.dataset.plant;
+    selectedTool = "plant";
+
+    if (addPreview) addPreview.visible = false;
+    plantMenu.classList.remove("open");
+
+    if (selectedSquare && !selectedSquare.userData.removed) {
+      plantOnSquare(selectedSquare);
+    }
   });
+}
+
+function makeIco(size, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) {
+  const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(size, 0), material);
+
+  mesh.position.set(x, y, z);
+  mesh.scale.set(sx, sy, sz);
+  mesh.rotation.set(rx, ry, rz);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
+  return mesh;
+}
+
+function makeCylinder(height, radius, material, x, y, z, rx = 0, rz = 0) {
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.75, radius, height, 6),
+    material
+  );
+
+  stem.position.set(x, y + height / 2, z);
+  stem.rotation.x = rx;
+  stem.rotation.z = rz;
+  stem.castShadow = true;
+  stem.receiveShadow = true;
+
+  return stem;
+}
 
   function makeIco(size, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) {
   const mesh = new THREE.Mesh(
@@ -1161,7 +1216,269 @@ function createRadishPlant(tileId) {
   return plant;
 }
 
-  function createPlant(type, tileId) {
+function createCloverPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const spots = [
+    [-0.13, 0.04, 0.22],
+    [0.08, 0.09, 0.26],
+    [0.16, -0.08, 0.21],
+    [-0.03, -0.14, 0.24]
+  ];
+
+  spots.forEach(([x, z, h], index) => {
+    plant.add(makeCylinder(h, 0.012, materials.stemLight, x, 0.25, z));
+
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 + index * 0.4;
+      plant.add(makeIco(0.045, materials.leafLight, x + Math.cos(a) * 0.035, 0.25 + h, z + Math.sin(a) * 0.035, 1.05, 0.35, 0.85, 0.25, a, 0.1));
+    }
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createHostaPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2;
+    const x = Math.cos(a) * 0.06;
+    const z = Math.sin(a) * 0.06;
+
+    plant.add(makeCylinder(0.18, 0.012, materials.stemLight, x, 0.25, z, Math.sin(a) * -0.25, Math.cos(a) * 0.25));
+    plant.add(makeIco(0.085, i % 2 === 0 ? materials.leafLight : materials.leaf, Math.cos(a) * 0.16, 0.39, Math.sin(a) * 0.16, 1.55, 0.28, 0.9, 0.35, a, 0));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createGrassPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    const h = 0.18 + (i % 4) * 0.035;
+    plant.add(makeCylinder(h, 0.01, i % 2 === 0 ? materials.leafLight : materials.leaf, Math.cos(a) * 0.1, 0.25, Math.sin(a) * 0.1, Math.sin(a) * -0.35, Math.cos(a) * 0.35));
+  }
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createDaffodilPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const flowers = [
+    { x: 0, z: 0, h: 0.5, s: 1 },
+    { x: -0.14, z: 0.08, h: 0.4, s: 0.82 }
+  ];
+
+  flowers.forEach((f, index) => {
+    plant.add(makeCylinder(f.h, 0.018, materials.stemLight, f.x, 0.25, f.z));
+
+    const head = new THREE.Group();
+    head.position.set(f.x, 0.25 + f.h, f.z);
+    head.scale.set(f.s, f.s, f.s);
+
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      head.add(makeIco(0.06, materials.yellowPetal, Math.cos(a) * 0.06, 0, Math.sin(a) * 0.06, 1.2, 0.45, 0.82, 0.25, a, 0));
+    }
+
+    head.add(makeIco(0.045, materials.flowerCenter, 0, 0.015, 0, 0.9, 0.7, 0.9));
+    plant.add(head);
+
+    plant.add(makeIco(0.065, materials.leafLight, f.x * 0.6 + 0.04, 0.4, f.z, 1.25, 0.28, 0.65, 0.35, index * 1.5, 0));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createIrisPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const stems = [
+    { x: 0, z: 0, h: 0.54, s: 1 },
+    { x: 0.13, z: -0.06, h: 0.43, s: 0.82 }
+  ];
+
+  stems.forEach((f, index) => {
+    plant.add(makeCylinder(f.h, 0.017, materials.stemLight, f.x, 0.25, f.z));
+
+    const head = new THREE.Group();
+    head.position.set(f.x, 0.25 + f.h, f.z);
+    head.scale.set(f.s, f.s, f.s);
+
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      head.add(makeIco(0.075, materials.purplePetal, Math.cos(a) * 0.055, 0.015, Math.sin(a) * 0.055, 0.95, 0.45, 1.25, 0.5, a, 0.2));
+      head.add(makeIco(0.052, materials.purplePetal, Math.cos(a + 0.5) * 0.035, -0.02, Math.sin(a + 0.5) * 0.035, 0.75, 0.35, 0.9, 0.2, a, -0.2));
+    }
+
+    plant.add(head);
+    plant.add(makeIco(0.07, materials.leafDark, f.x - 0.05, 0.42, f.z, 0.8, 0.3, 1.5, 0.5, index, 0));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createTulipPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const tulips = [
+    { x: -0.08, z: 0.03, h: 0.48, s: 1 },
+    { x: 0.12, z: -0.05, h: 0.4, s: 0.86 }
+  ];
+
+  tulips.forEach((f, index) => {
+    plant.add(makeCylinder(f.h, 0.018, materials.stemLight, f.x, 0.25, f.z));
+
+    const head = new THREE.Group();
+    head.position.set(f.x, 0.25 + f.h, f.z);
+    head.scale.set(f.s, f.s, f.s);
+
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
+      head.add(makeIco(0.065, materials.tulipRed, Math.cos(a) * 0.04, 0.015, Math.sin(a) * 0.04, 0.9, 0.65, 1.05, 0.35, a, 0.15));
+    }
+
+    plant.add(head);
+    plant.add(makeIco(0.075, materials.leafLight, f.x + (index === 0 ? 0.06 : -0.06), 0.4, f.z, 1.3, 0.28, 0.72, 0.35, index * 1.7, 0));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createDogwoodPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  plant.add(makeCylinder(0.38, 0.026, materials.stem, 0, 0.25, 0));
+
+  const flowers = [
+    { a: 0.2, y: 0.52 },
+    { a: 2.3, y: 0.5 },
+    { a: 4.1, y: 0.54 }
+  ];
+
+  flowers.forEach((f, index) => {
+    const x = Math.cos(f.a) * 0.16;
+    const z = Math.sin(f.a) * 0.16;
+
+    plant.add(makeCylinder(0.18, 0.012, materials.stem, x * 0.4, f.y - 0.15, z * 0.4, Math.sin(f.a) * -0.65, Math.cos(f.a) * 0.65));
+
+    const head = new THREE.Group();
+    head.position.set(x, f.y, z);
+
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
+      head.add(makeIco(0.055, materials.whitePetal, Math.cos(a) * 0.055, 0, Math.sin(a) * 0.055, 1.25, 0.4, 0.85, 0.25, a, 0));
+    }
+
+    head.add(makeIco(0.03, materials.flowerCenter, 0, 0.01, 0));
+    plant.add(head);
+
+    plant.add(makeIco(0.055, materials.leafLight, x * 0.7, f.y - 0.04, z * 0.7, 1.1, 0.3, 0.65, 0.4, f.a, 0));
+  });
+
+  plant.scale.set(0.88, 0.88, 0.88);
+  return plant;
+}
+
+function createStrawberryPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const berries = [
+    { a: 0, h: 0.23 },
+    { a: 2.1, h: 0.22 },
+    { a: 4.2, h: 0.24 }
+  ];
+
+  berries.forEach((b, index) => {
+    const x = Math.cos(b.a) * 0.08;
+    const z = Math.sin(b.a) * 0.08;
+
+    plant.add(makeCylinder(b.h, 0.012, materials.stemLight, x, 0.25, z));
+    plant.add(makeIco(0.07, materials.strawberry, Math.cos(b.a) * 0.18, 0.25 + b.h, Math.sin(b.a) * 0.18, 0.82, 1.05, 0.82, 0.15, b.a, 0));
+    plant.add(makeIco(0.055, index % 2 === 0 ? materials.leafLight : materials.leaf, x, 0.46, z, 1.15, 0.32, 0.68, 0.3, b.a, 0));
+  });
+
+  plant.scale.set(0.88, 0.88, 0.88);
+  return plant;
+}
+
+function createLettucePlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const dist = 0.08 + (i % 3) * 0.03;
+    plant.add(makeIco(0.085, i % 2 === 0 ? materials.lettuce : materials.leafLight, Math.cos(a) * dist, 0.34 + (i % 3) * 0.02, Math.sin(a) * dist, 1.3, 0.34, 0.78, 0.35, a, 0.12));
+  }
+
+  plant.add(makeIco(0.095, materials.lettuce, 0, 0.39, 0, 1.15, 0.5, 1.05));
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createPeasPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  plant.add(makeCylinder(0.44, 0.014, materials.stemLight, 0, 0.25, 0));
+
+  for (let i = 0; i < 4; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const y = 0.36 + i * 0.07;
+
+    plant.add(makeCylinder(0.14, 0.009, materials.stemLight, side * 0.04, y, 0, 0, side * 0.75));
+    plant.add(makeIco(0.055, materials.peaPod, side * 0.14, y + 0.06, 0.02 * i, 0.65, 0.4, 1.45, 0.3, side * 0.65, 0));
+    plant.add(makeIco(0.05, materials.leafLight, side * 0.09, y + 0.02, -0.03, 1.1, 0.3, 0.6, 0.4, side * 0.65, 0));
+  }
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createRadishPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const spots = [
+    { x: -0.1, z: 0.04 },
+    { x: 0.1, z: -0.05 }
+  ];
+
+  spots.forEach((r, index) => {
+    plant.add(makeIco(0.085, materials.radish, r.x, 0.34, r.z, 0.9, 1.15, 0.9));
+    plant.add(makeCylinder(0.14, 0.01, materials.stemLight, r.x, 0.42, r.z));
+
+    for (let i = 0; i < 3; i++) {
+      const a = index + i * 2.1;
+      plant.add(makeIco(0.06, materials.leafLight, r.x + Math.cos(a) * 0.055, 0.52, r.z + Math.sin(a) * 0.055, 1.1, 0.32, 0.65, 0.35, a, 0));
+    }
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createPlant(type, tileId) {
   let plant;
 
   if (type === "fern") plant = createFernPlant(tileId);
@@ -1174,9 +1491,9 @@ function createRadishPlant(tileId) {
   else if (type === "iris") plant = createIrisPlant(tileId);
   else if (type === "tulip") plant = createTulipPlant(tileId);
   else if (type === "dogwood") plant = createDogwoodPlant(tileId);
+  else if (type === "tomato") plant = createTomatoPlant(tileId);
   else if (type === "carrot") plant = createCarrotPlant(tileId);
   else if (type === "potato") plant = createPotatoPlant(tileId);
-  else if (type === "tomato") plant = createTomatoPlant(tileId);
   else if (type === "strawberry") plant = createStrawberryPlant(tileId);
   else if (type === "lettuce") plant = createLettucePlant(tileId);
   else if (type === "peas") plant = createPeasPlant(tileId);

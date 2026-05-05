@@ -353,6 +353,31 @@ button {
   display: block;
 }
 
+.plant-category-btn {
+  width: 100%;
+  margin: 8px 0 4px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 14px;
+  background: #ece8c9;
+  color: #7a4144;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.plant-category-list {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.plant-category-list.open {
+  display: flex;
+}
+
 .remove-popup h2 {
   margin: 0 0 14px;
   color: #9b3d3d;
