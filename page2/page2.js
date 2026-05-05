@@ -252,9 +252,28 @@ radish: new THREE.MeshStandardMaterial({ color: 0xc9475d, roughness: 0.62, flatS
 
 if (eyeButton && gridMenu) {
   eyeButton.addEventListener("click", () => {
+    selectedTool = null;
+    selectedPlant = null;
+    toolPointerDown = false;
+    addedThisDrag = [];
+
+    clearRemoveSelection();
+
+    if (selectedSquare) {
+      clearTileHighlight(selectedSquare);
+      selectedSquare = null;
+    }
+
+    if (addPreview) {
+      addPreview.visible = false;
+    }
+
     const isOpen = gridMenu.classList.contains("open");
     closeAllPopups();
-    if (!isOpen) gridMenu.classList.add("open");
+
+    if (!isOpen) {
+      gridMenu.classList.add("open");
+    }
   });
 }
 
@@ -1593,6 +1612,17 @@ function createPlant(type, tileId) {
     tileStacks[key].sort((a, b) => a.userData.level - b.userData.level);
   }
 
+function getTopTileAt(row, col) {
+  const stack = tileStacks[coordKey(row, col)] || [];
+  const visibleStack = stack.filter((tile) => !tile.userData.removed);
+
+  if (visibleStack.length === 0) return null;
+
+  return visibleStack.reduce((highest, tile) => {
+    return tile.userData.level > highest.userData.level ? tile : highest;
+  });
+}
+
 function getTopLevel(row, col) {
   const stack = tileStacks[coordKey(row, col)] || [];
 
@@ -2145,6 +2175,12 @@ function getTopTileAt(row, col) {
     if (!coord) return;
 
     const dragKey = `${coord.row}-${coord.col}`;
+
+    const topTile = getTopTileAt(row, col);
+
+if (topTile && plantedItems[topTile.userData.tileId]) {
+  return;
+}
 
     if (addedThisDrag.includes(dragKey)) return;
 
