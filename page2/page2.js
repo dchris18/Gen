@@ -161,6 +161,47 @@ const IDLE_DELAY = 10000;
       flatShading: true
     }),
 
+        yellowPetal: new THREE.MeshStandardMaterial({
+      color: 0xf2d35d,
+      roughness: 0.58,
+      flatShading: true
+    }),
+    purplePetal: new THREE.MeshStandardMaterial({
+      color: 0x7650a8,
+      roughness: 0.58,
+      flatShading: true
+    }),
+    whitePetal: new THREE.MeshStandardMaterial({
+      color: 0xf4ead4,
+      roughness: 0.62,
+      flatShading: true
+    }),
+    tulipRed: new THREE.MeshStandardMaterial({
+      color: 0xd85b58,
+      roughness: 0.6,
+      flatShading: true
+    }),
+    strawberry: new THREE.MeshStandardMaterial({
+      color: 0xd94a45,
+      roughness: 0.6,
+      flatShading: true
+    }),
+    lettuce: new THREE.MeshStandardMaterial({
+      color: 0xa7c957,
+      roughness: 0.62,
+      flatShading: true
+    }),
+    peaPod: new THREE.MeshStandardMaterial({
+      color: 0x6fb84f,
+      roughness: 0.65,
+      flatShading: true
+    }),
+    radish: new THREE.MeshStandardMaterial({
+      color: 0xc9475d,
+      roughness: 0.62,
+      flatShading: true
+    }),
+
     flowerPetal: new THREE.MeshStandardMaterial({
       color: 0xd98b96,
       roughness: 0.6,
@@ -245,6 +286,36 @@ const IDLE_DELAY = 10000;
       }
     });
   });
+
+  function makeIco(size, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) {
+  const mesh = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(size, 0),
+    material
+  );
+
+  mesh.position.set(x, y, z);
+  mesh.scale.set(sx, sy, sz);
+  mesh.rotation.set(rx, ry, rz);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
+  return mesh;
+}
+
+function makeSimpleStem(height, radius, material, x, y, z, rx = 0, rz = 0) {
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.75, radius, height, 6),
+    material
+  );
+
+  stem.position.set(x, y + height / 2, z);
+  stem.rotation.x = rx;
+  stem.rotation.z = rz;
+  stem.castShadow = true;
+  stem.receiveShadow = true;
+
+  return stem;
+}
 
   function seededRandom(seedText) {
     let seed = 0;
@@ -765,23 +836,360 @@ function createTomatoPlant(tileId) {
   return plant;
 }
 
-  function createPlant(type, tileId) {
-    let plant;
+function createCloverPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
 
-    if (type === "fern") plant = createFernPlant(tileId);
-    else if (type === "flower") plant = createFlowerPlant(tileId);
-    else if (type === "carrot") plant = createCarrotPlant(tileId);
-    else if (type === "potato") plant = createPotatoPlant(tileId);
-    else if (type === "tomato") plant = createTomatoPlant(tileId);
-    else plant = createSproutPlant(tileId);
+  const clovers = [
+    { x: -0.12, z: 0.04, h: 0.24 },
+    { x: 0.08, z: 0.08, h: 0.28 },
+    { x: 0.16, z: -0.1, h: 0.22 },
+    { x: -0.04, z: -0.14, h: 0.26 }
+  ];
 
-    plant.userData.isPlant = true;
-    plant.userData.plantType = type;
-    plant.rotation.y = Math.random() * Math.PI * 2;
-    plant.position.y = 0;
+  clovers.forEach((item, index) => {
+    plant.add(makeSimpleStem(item.h, 0.012, materials.stemLight, item.x, 0.25, item.z));
 
-    return plant;
+    const topY = 0.25 + item.h;
+
+    for (let i = 0; i < 3; i++) {
+      const angle = (i / 3) * Math.PI * 2 + index * 0.4;
+
+      plant.add(
+        makeIco(
+          0.045,
+          i === 0 ? materials.leafLight : materials.leaf,
+          item.x + Math.cos(angle) * 0.035,
+          topY,
+          item.z + Math.sin(angle) * 0.035,
+          1.1,
+          0.38,
+          0.8,
+          0.25,
+          angle,
+          0.15
+        )
+      );
+    }
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createHostaPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  for (let i = 0; i < 7; i++) {
+    const angle = (i / 7) * Math.PI * 2;
+    const dist = 0.12 + (i % 2) * 0.04;
+
+    plant.add(makeSimpleStem(0.18, 0.012, materials.stemLight, Math.cos(angle) * 0.04, 0.25, Math.sin(angle) * 0.04, Math.sin(angle) * -0.35, Math.cos(angle) * 0.35));
+
+    plant.add(
+      makeIco(
+        0.09,
+        i % 2 === 0 ? materials.leafLight : materials.leaf,
+        Math.cos(angle) * dist,
+        0.39,
+        Math.sin(angle) * dist,
+        1.45,
+        0.28,
+        0.85,
+        0.35,
+        angle,
+        0
+      )
+    );
   }
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createGrassPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2;
+    const h = 0.22 + (i % 3) * 0.05;
+    const x = Math.cos(angle) * 0.09;
+    const z = Math.sin(angle) * 0.09;
+
+    plant.add(makeSimpleStem(h, 0.011, i % 2 === 0 ? materials.leafLight : materials.leaf, x, 0.25, z, Math.sin(angle) * -0.45, Math.cos(angle) * 0.45));
+  }
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createDaffodilPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const flowers = [
+    { x: 0, z: 0, h: 0.52, s: 1 },
+    { x: -0.13, z: 0.08, h: 0.42, s: 0.82 }
+  ];
+
+  flowers.forEach((item, flowerIndex) => {
+    plant.add(makeSimpleStem(item.h, 0.018, materials.stemLight, item.x, 0.25, item.z, item.z * -0.25, item.x * 0.25));
+
+    const head = new THREE.Group();
+    head.position.set(item.x, 0.25 + item.h, item.z);
+    head.scale.set(item.s, item.s, item.s);
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      head.add(makeIco(0.06, materials.yellowPetal, Math.cos(angle) * 0.06, 0, Math.sin(angle) * 0.06, 1.2, 0.45, 0.8, 0.25, angle, 0));
+    }
+
+    head.add(makeIco(0.05, materials.flowerCenter, 0, 0.015, 0, 0.9, 0.7, 0.9));
+
+    plant.add(head);
+
+    plant.add(makeIco(0.065, materials.leafLight, item.x * 0.6, 0.4, item.z * 0.6 + 0.05, 1.25, 0.28, 0.65, 0.35, flowerIndex, 0));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createIrisPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const stems = [
+    { x: 0, z: 0, h: 0.54, s: 1 },
+    { x: 0.12, z: -0.06, h: 0.43, s: 0.82 }
+  ];
+
+  stems.forEach((item, idx) => {
+    plant.add(makeSimpleStem(item.h, 0.017, materials.stemLight, item.x, 0.25, item.z, item.z * -0.2, item.x * 0.25));
+
+    const head = new THREE.Group();
+    head.position.set(item.x, 0.25 + item.h, item.z);
+    head.scale.set(item.s, item.s, item.s);
+
+    for (let i = 0; i < 3; i++) {
+      const angle = (i / 3) * Math.PI * 2;
+
+      head.add(makeIco(0.075, materials.purplePetal, Math.cos(angle) * 0.055, 0.015, Math.sin(angle) * 0.055, 0.95, 0.45, 1.25, 0.5, angle, 0.2));
+      head.add(makeIco(0.055, materials.purplePetal, Math.cos(angle + 0.45) * 0.035, -0.02, Math.sin(angle + 0.45) * 0.035, 0.8, 0.36, 0.95, 0.2, angle, -0.2));
+    }
+
+    head.add(makeIco(0.035, materials.flowerCenter, 0, 0.01, 0, 0.8, 0.7, 0.8));
+    plant.add(head);
+
+    plant.add(makeIco(0.07, materials.leafDark, item.x * 0.5 - 0.05, 0.42, item.z * 0.5, 0.8, 0.3, 1.55, 0.5, idx, 0.1));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createTulipPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const tulips = [
+    { x: -0.07, z: 0.03, h: 0.48, s: 1 },
+    { x: 0.11, z: -0.05, h: 0.4, s: 0.86 }
+  ];
+
+  tulips.forEach((item, idx) => {
+    plant.add(makeSimpleStem(item.h, 0.018, materials.stemLight, item.x, 0.25, item.z));
+
+    const head = new THREE.Group();
+    head.position.set(item.x, 0.25 + item.h, item.z);
+    head.scale.set(item.s, item.s, item.s);
+
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2;
+
+      head.add(makeIco(0.065, materials.tulipRed, Math.cos(angle) * 0.04, 0.018, Math.sin(angle) * 0.04, 0.9, 0.65, 1.05, 0.35, angle, 0.15));
+    }
+
+    head.add(makeIco(0.05, materials.tulipRed, 0, 0.005, 0, 1, 0.7, 1));
+    plant.add(head);
+
+    plant.add(makeIco(0.075, materials.leafLight, item.x + (idx === 0 ? 0.06 : -0.06), 0.4, item.z, 1.3, 0.28, 0.72, 0.35, idx * 1.7, 0));
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createDogwoodPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const trunk = makeSimpleStem(0.38, 0.026, materials.stem, 0, 0.25, 0);
+  plant.add(trunk);
+
+  const branches = [
+    { a: 0.2, y: 0.52 },
+    { a: 2.3, y: 0.5 },
+    { a: 4.1, y: 0.54 }
+  ];
+
+  branches.forEach((item, idx) => {
+    const branch = makeSimpleStem(0.18, 0.012, materials.stem, Math.cos(item.a) * 0.045, item.y - 0.08, Math.sin(item.a) * 0.045, Math.sin(item.a) * -0.7, Math.cos(item.a) * 0.7);
+    plant.add(branch);
+
+    const flower = new THREE.Group();
+    flower.position.set(Math.cos(item.a) * 0.17, item.y, Math.sin(item.a) * 0.17);
+
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2;
+      flower.add(makeIco(0.055, materials.whitePetal, Math.cos(angle) * 0.055, 0, Math.sin(angle) * 0.055, 1.25, 0.4, 0.85, 0.25, angle, 0));
+    }
+
+    flower.add(makeIco(0.032, materials.flowerCenter, 0, 0.01, 0, 0.85, 0.7, 0.85));
+    plant.add(flower);
+
+    plant.add(makeIco(0.055, idx % 2 === 0 ? materials.leafLight : materials.leaf, Math.cos(item.a + 0.3) * 0.12, item.y - 0.03, Math.sin(item.a + 0.3) * 0.12, 1.1, 0.3, 0.65, 0.4, item.a, 0));
+  });
+
+  plant.scale.set(0.88, 0.88, 0.88);
+  return plant;
+}
+
+function createStrawberryPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const stems = [
+    { a: 0, h: 0.25 },
+    { a: 2.1, h: 0.23 },
+    { a: 4.2, h: 0.26 }
+  ];
+
+  stems.forEach((item, i) => {
+    const x = Math.cos(item.a) * 0.08;
+    const z = Math.sin(item.a) * 0.08;
+
+    plant.add(makeSimpleStem(item.h, 0.012, materials.stemLight, x, 0.25, z, Math.sin(item.a) * -0.25, Math.cos(item.a) * 0.25));
+
+    plant.add(makeIco(0.07, materials.strawberry, Math.cos(item.a) * 0.18, 0.42, Math.sin(item.a) * 0.18, 0.8, 1.05, 0.8, 0.15, item.a, 0));
+
+    plant.add(makeIco(0.06, i % 2 === 0 ? materials.leafLight : materials.leaf, x, 0.47, z, 1.15, 0.32, 0.68, 0.3, item.a, 0));
+  });
+
+  plant.scale.set(0.88, 0.88, 0.88);
+  return plant;
+}
+
+function createLettucePlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  for (let i = 0; i < 9; i++) {
+    const angle = (i / 9) * Math.PI * 2;
+    const dist = 0.08 + (i % 3) * 0.035;
+
+    plant.add(
+      makeIco(
+        0.085,
+        i % 2 === 0 ? materials.lettuce : materials.leafLight,
+        Math.cos(angle) * dist,
+        0.34 + (i % 3) * 0.025,
+        Math.sin(angle) * dist,
+        1.3,
+        0.34,
+        0.78,
+        0.35,
+        angle,
+        0.12
+      )
+    );
+  }
+
+  plant.add(makeIco(0.095, materials.lettuce, 0, 0.39, 0, 1.15, 0.5, 1.05));
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createPeasPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const mainStem = makeSimpleStem(0.44, 0.014, materials.stemLight, 0, 0.25, 0);
+  plant.add(mainStem);
+
+  for (let i = 0; i < 4; i++) {
+    const angle = i % 2 === 0 ? 0.65 : -0.65;
+    const y = 0.36 + i * 0.07;
+    const side = i % 2 === 0 ? 1 : -1;
+
+    plant.add(makeSimpleStem(0.16, 0.009, materials.stemLight, side * 0.04, y, 0, 0, side * 0.85));
+
+    plant.add(makeIco(0.055, materials.peaPod, side * 0.14, y + 0.06, 0.02 * i, 0.65, 0.4, 1.45, 0.3, angle, 0));
+
+    plant.add(makeIco(0.05, materials.leafLight, side * 0.09, y + 0.02, -0.03, 1.1, 0.3, 0.6, 0.4, angle, 0));
+  }
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+function createRadishPlant(tileId) {
+  const plant = new THREE.Group();
+  plant.add(makeSoilBlob(tileId));
+
+  const radishes = [
+    { x: -0.1, z: 0.04 },
+    { x: 0.1, z: -0.05 }
+  ];
+
+  radishes.forEach((item, idx) => {
+    plant.add(makeIco(0.085, materials.radish, item.x, 0.34, item.z, 0.9, 1.15, 0.9));
+
+    plant.add(makeSimpleStem(0.14, 0.01, materials.stemLight, item.x, 0.42, item.z));
+
+    for (let i = 0; i < 3; i++) {
+      const angle = idx + i * 2.1;
+
+      plant.add(makeIco(0.06, materials.leafLight, item.x + Math.cos(angle) * 0.055, 0.52, item.z + Math.sin(angle) * 0.055, 1.1, 0.32, 0.65, 0.35, angle, 0));
+    }
+  });
+
+  plant.scale.set(0.9, 0.9, 0.9);
+  return plant;
+}
+
+  function createPlant(type, tileId) {
+  let plant;
+
+  if (type === "fern") plant = createFernPlant(tileId);
+  else if (type === "sprout") plant = createSproutPlant(tileId);
+  else if (type === "clover") plant = createCloverPlant(tileId);
+  else if (type === "hosta") plant = createHostaPlant(tileId);
+  else if (type === "grass") plant = createGrassPlant(tileId);
+  else if (type === "flower") plant = createFlowerPlant(tileId);
+  else if (type === "daffodil") plant = createDaffodilPlant(tileId);
+  else if (type === "iris") plant = createIrisPlant(tileId);
+  else if (type === "tulip") plant = createTulipPlant(tileId);
+  else if (type === "dogwood") plant = createDogwoodPlant(tileId);
+  else if (type === "carrot") plant = createCarrotPlant(tileId);
+  else if (type === "potato") plant = createPotatoPlant(tileId);
+  else if (type === "tomato") plant = createTomatoPlant(tileId);
+  else if (type === "strawberry") plant = createStrawberryPlant(tileId);
+  else if (type === "lettuce") plant = createLettucePlant(tileId);
+  else if (type === "peas") plant = createPeasPlant(tileId);
+  else if (type === "radish") plant = createRadishPlant(tileId);
+  else plant = createSproutPlant(tileId);
+
+  plant.userData.isPlant = true;
+  plant.userData.plantType = type;
+  plant.rotation.y = Math.floor(Math.random() * 8) * (Math.PI / 4);
+  plant.position.y = 0;
+
+  return plant;
+}
 
   function coordKey(row, col) {
     return `${row}-${col}`;
