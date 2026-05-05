@@ -2169,33 +2169,32 @@ function getTopTileAt(row, col) {
   });
 }
 
-  function addFromMouseEvent(e) {
-    const coord = getAddCoordFromMouseEvent(e);
+ function addFromMouseEvent(e) {
+  const coord = getAddCoordFromMouseEvent(e);
 
-    if (!coord) return;
+  if (!coord) return;
 
-    const dragKey = `${coord.row}-${coord.col}`;
+  const dragKey = `${coord.row}-${coord.col}`;
 
+  if (addedThisDrag.includes(dragKey)) return;
 
-    if (addedThisDrag.includes(dragKey)) return;
+  const topTile = getTopTileAt(coord.row, coord.col);
 
-if (addedThisDrag.length === 0) {
-  saveUndoState();
-}
-
-const topTile = getTopTileAt(row, col);
-
-if (topTile && plantedItems[topTile.userData.tileId]) {
-  return;
-}
-
-const addedTile = addTileAtCoord(coord.row, coord.col);
-
-    if (addedTile) {
-      addedThisDrag.push(dragKey);
-      updateAddPreview(e);
-    }
+  if (topTile && plantedItems[topTile.userData.tileId]) {
+    return;
   }
+
+  if (addedThisDrag.length === 0) {
+    saveUndoState();
+  }
+
+  const addedTile = addTileAtCoord(coord.row, coord.col);
+
+  if (addedTile) {
+    addedThisDrag.push(dragKey);
+    updateAddPreview(e);
+  }
+}
 
   function createTile(row, col, level) {
     const tileGroup = new THREE.Group();
