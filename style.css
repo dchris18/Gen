@@ -619,3 +619,35 @@ button {
     pointer-events: none;
   }
 }
+
+.rewind-button {
+  width: 56px !important;
+  height: 56px !important;
+  right: 18px !important;
+  bottom: 18px !important;
+}
+
+.rewind-button img {
+  width: 56px !important;
+  height: 56px !important;
+  object-fit: contain !important;
+}
+
+.bookmark-button,
+.save-button,
+.tile-remove-button,
+.tile-menu-button,
+.eye-button,
+.rewind-button,
+.tool-pot {
+  transition: transform 0.18s ease;
+  transform-origin: center;
+}
+
+.icon-selected {
+  transform: scale(1.18) !important;
+}
+
+.icon-near-selected {
+  transform: scale(0.88) !important;
+}
