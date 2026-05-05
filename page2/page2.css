@@ -159,17 +159,34 @@ button {
 }
 
 .planner-board {
-  position: absolute;
-  inset: 0;
+  position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 0;
-  background: #9a8164;
-  border: 8px solid #de9572;
-  box-shadow:
-    0 7px 14px rgba(0, 0, 0, 0.18),
-    inset 0 0 0 4px rgba(232, 178, 146, 0.35);
-  overflow: hidden;
+}
+
+.plant-menu h3 {
+  margin: 12px 0 6px;
+  color: #7a4144;
+  font-size: 15px;
+}
+
+.rewind-button {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: none;
+  padding: 0;
+  z-index: 999;
+}
+
+.rewind-button img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  display: block;
 }
 
 #three-platform {
